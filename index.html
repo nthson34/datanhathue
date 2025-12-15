@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Tra cứu tài sản</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -11,30 +11,24 @@
 <style>
 body { font-family: Inter, sans-serif; background:#f1f5f9; }
 .card { border-left:4px solid #2563eb; }
-.spinner {
-  width:32px;height:32px;
-  border:4px solid #e5e7eb;
-  border-top:4px solid #2563eb;
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-}
-@keyframes spin { to{transform:rotate(360deg)} }
+.badge { font-size:12px; padding:2px 8px; border-radius:999px; }
 </style>
 </head>
 
 <body class="min-h-screen">
 
 <!-- HEADER -->
-<header class="bg-blue-800 text-white py-4 sticky top-0 z-10">
-  <div class="max-w-4xl mx-auto px-4">
-    <h1 class="text-2xl font-bold text-center">Tra Cứu Thông Tin Tài Sản</h1>
-    <div class="flex gap-2 mt-4">
+<header class="bg-blue-700 text-white sticky top-0 z-10 shadow">
+  <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
+    <h1 class="text-xl font-bold text-center">Tra Cứu Thông Tin Tài Sản</h1>
+
+    <div class="flex gap-2">
       <input id="search" type="text"
-        placeholder="Nhập tên, địa chỉ, SĐT..."
-        class="flex-1 p-3 rounded-lg text-gray-800"
+        placeholder="Tên, địa chỉ, SĐT, giá..."
+        class="flex-1 p-3 rounded-lg text-gray-800 text-sm"
         disabled>
       <button id="btn"
-        class="bg-blue-500 hover:bg-blue-600 px-6 rounded-lg font-semibold"
+        class="bg-blue-500 hover:bg-blue-600 px-4 rounded-lg font-semibold text-sm"
         disabled>
         Tìm
       </button>
@@ -43,16 +37,16 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 </header>
 
 <!-- CONTENT -->
-<main class="max-w-4xl mx-auto p-4">
+<main class="max-w-3xl mx-auto p-3">
 
-  <div id="loading" class="bg-white p-8 rounded-lg shadow text-center">
-    <div class="spinner mx-auto mb-4"></div>
-    <p>Đang tải dữ liệu...</p>
+  <div id="loading" class="bg-white p-6 rounded-lg shadow text-center">
+    <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
+    <p class="text-sm">Đang tải dữ liệu...</p>
   </div>
 
-  <div id="list" class="grid gap-4 hidden"></div>
+  <div id="list" class="space-y-3 hidden"></div>
 
-  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
+  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4 text-sm">
     Không tìm thấy kết quả phù hợp
   </div>
 
@@ -77,11 +71,6 @@ const cleanJSON = t =>
      .slice(0,-2)
   );
 
-const driveImg = url => {
-  const m = url?.match(/(?:id=|d\/)([a-zA-Z0-9_-]+)/);
-  return m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : url;
-};
-
 /* ================== FETCH DATA ================== */
 async function loadData() {
   try {
@@ -89,27 +78,23 @@ async function loadData() {
     const txt = await res.text();
     const json = cleanJSON(txt);
 
-    DATA = json.table.rows
-      .map(r => ({
-        owner: r.c?.[0]?.v || '',
-        phone: r.c?.[1]?.v || '',
-        address: r.c?.[2]?.v || '',
-        image: r.c?.[3]?.v || '',
-        price: r.c?.[4]?.v || '',
-        deposit: r.c?.[5]?.v || '',
-        commission: r.c?.[6]?.v || ''
-      }))
-      .filter(i => i.owner);
+    DATA = json.table.rows.map(r => ({
+      owner: r.c?.[0]?.v || '',
+      phone: r.c?.[1]?.v || '',
+      address: r.c?.[2]?.v || '',
+      image: r.c?.[3]?.v || '',
+      price: r.c?.[4]?.v || '',
+      deposit: r.c?.[5]?.v || '',
+      commission: r.c?.[6]?.v || ''
+    })).filter(i => i.owner);
 
     $('loading').classList.add('hidden');
     $('search').disabled = false;
     $('btn').disabled = false;
 
     render(DATA);
-
   } catch (e) {
-    $('loading').innerHTML =
-      '<p class="text-red-600 font-bold">Không thể tải dữ liệu</p>';
+    $('loading').innerHTML = '<p class="text-red-600 font-bold">Không thể tải dữ liệu</p>';
   }
 }
 
@@ -128,27 +113,27 @@ function render(arr) {
   box.classList.remove('hidden');
 
   box.innerHTML = arr.map(i => `
-    <div class="card bg-white p-4 rounded-lg shadow">
-      <div class="flex gap-4">
-        <img src="${driveImg(i.image)}"
-          onerror="this.src='https://placehold.co/300x180?text=NO+IMAGE'"
-          class="w-32 h-24 object-cover rounded">
+    <div class="card bg-white p-4 rounded-lg shadow space-y-2">
 
-        <div class="flex-1">
-          <h2 class="font-bold text-blue-700">${i.owner}</h2>
-          <p class="text-sm text-gray-600">${i.address}</p>
+      <div>
+        <h2 class="font-bold text-blue-700">${i.owner}</h2>
+        <p class="text-gray-600 text-sm">${i.address}</p>
+      </div>
 
-          <div class="grid grid-cols-3 text-sm mt-2">
-            <div><b>Giá:</b> <span class="text-red-600">${i.price}</span></div>
-            <div><b>Cọc:</b> ${i.deposit}</div>
-            <div><b>HH:</b> ${i.commission}</div>
-          </div>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <span class="badge bg-red-100 text-red-600">Giá: ${i.price}</span>
+        <span class="badge bg-gray-100">Cọc: ${i.deposit}</span>
+        <span class="badge bg-blue-100 text-blue-700">HH: ${i.commission}</span>
+      </div>
 
-          <a href="tel:${i.phone}"
-            class="inline-block mt-2 text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
-            📞 ${i.phone}
-          </a>
-        </div>
+      <div class="flex flex-wrap items-center gap-3 text-sm">
+        <a href="tel:${i.phone}" class="bg-green-100 text-green-700 px-3 py-1 rounded-full">📞 ${i.phone}</a>
+
+        ${i.image ? `
+          <a href="${i.image}" target="_blank" class="text-blue-600 underline">📁 Hình ảnh</a>
+        ` : `
+          <span class="text-gray-400 italic">Không có hình</span>
+        `}
       </div>
     </div>
   `).join('');
