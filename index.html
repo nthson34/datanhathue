@@ -15,17 +15,22 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 </style>
 </head>
 
-<body class="min-h-screen">
+<body>
 
 <!-- HEADER -->
 <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white sticky top-0 z-10 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
     <h1 class="text-xl font-bold text-center">📊 Tra Cứu Tài Sản (Môi Giới)</h1>
 
-    <input id="search" type="text"
-      placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
-      class="w-full p-3 rounded-xl text-gray-800 text-sm"
-      disabled>
+    <div class="flex gap-2">
+      <input id="search" type="text"
+        placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
+        class="flex-1 p-3 rounded-xl text-gray-800 text-sm" disabled>
+      <button id="btn"
+        class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>
+        Tìm
+      </button>
+    </div>
   </div>
 </header>
 
@@ -69,15 +74,28 @@ async function loadData() {
     owner: r.c?.[0]?.v || '',
     phone: r.c?.[1]?.v || '',
     address: r.c?.[2]?.v || '',
-    image: r.c?.[3]?.v || '',
-    price: r.c?.[4]?.v || '',
-    deposit: r.c?.[5]?.v || '',
-    commission: r.c?.[6]?.v || ''
+    price: r.c?.[3]?.v || '',
+    deposit: r.c?.[4]?.v || '',
+    commission: r.c?.[5]?.v || '',
+    image: r.c?.[6]?.v || ''
   })).filter(i => i.address);
 
   $('loading').classList.add('hidden');
   $('search').disabled = false;
+  $('btn').disabled = false;
   render(DATA);
+}
+
+/* COPY FEEDBACK */
+function copyPhone(btn, phone) {
+  navigator.clipboard.writeText(phone);
+  const old = btn.innerHTML;
+  btn.innerHTML = '✓ Đã copy';
+  btn.classList.add('bg-green-200');
+  setTimeout(() => {
+    btn.innerHTML = old;
+    btn.classList.remove('bg-green-200');
+  }, 1500);
 }
 
 /* RENDER */
@@ -97,31 +115,27 @@ function render(arr) {
   box.innerHTML = arr.map(i => `
     <div class="card bg-white p-4 shadow space-y-3">
 
-      <!-- ADDRESS -->
-      <div class="text-indigo-700 font-bold text-base">
+      <div class="font-bold text-indigo-700 text-base">
         📍 ${i.address}
       </div>
 
-      <!-- PRICE + COMMISSION -->
       <div class="flex flex-wrap gap-2">
         <span class="badge bg-red-100 text-red-600 font-semibold">💰 ${i.price}</span>
         <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
         <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
       </div>
 
-      <!-- PHONE -->
       <div class="flex gap-2">
         <a href="tel:${i.phone}"
           class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
-          📞 GỌI NGAY
+          📞 GỌI NGAY (${i.phone})
         </a>
-        <button onclick="navigator.clipboard.writeText('${i.phone}')"
-          class="bg-gray-200 px-3 rounded-xl">
+        <button onclick="copyPhone(this,'${i.phone}')"
+          class="bg-gray-200 px-3 rounded-xl text-sm">
           📋
         </button>
       </div>
 
-      <!-- FOOTER -->
       <div class="flex justify-between items-center text-sm text-gray-500">
         <span>👤 ${i.owner}</span>
         ${i.image ? `<a href="${i.image}" target="_blank" class="text-blue-600 font-semibold">📷 Xem hình</a>` : ''}
@@ -132,15 +146,20 @@ function render(arr) {
 }
 
 /* SEARCH */
-$('search').addEventListener('input', () => {
-  const k = $('search').value.toLowerCase();
+function search() {
+  const k = $('search').value.toLowerCase().trim();
+  if (!k) return render(DATA);
+
   render(DATA.filter(i =>
-    [i.address,i.phone,i.price,i.deposit,i.commission]
+    [i.address, i.phone, i.price, i.deposit, i.commission]
       .join(' ')
       .toLowerCase()
       .includes(k)
   ));
-});
+}
+
+$('btn').onclick = search;
+$('search').addEventListener('keydown', e => e.key === 'Enter' && search());
 
 loadData();
 </script>
