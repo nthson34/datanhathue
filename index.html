@@ -82,7 +82,7 @@
         // 1. Thay thế YOUR_SHEET_ID_HERE bằng ID của Sheet của bạn
         const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A'; 
         // 2. Thay thế GID của Sheet (thường là 0 cho sheet đầu tiên)
-        const SHEET_GID = '0'; 
+        const SHEET_GID = '61368668'; 
         // 3. Đảm bảo Sheet của bạn được đặt quyền "Bất kỳ ai có đường liên kết đều có thể xem"
 
         // Biến toàn cục để lưu trữ dữ liệu sau khi tải
@@ -118,7 +118,7 @@
             }
             
             // Sử dụng Google Visualization API Query Language để lấy dữ liệu
-            const queryUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+            const queryUrl = `https://docs.google.com/spreadsheets/d/$14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A/gviz/tq?tqx=out:json&gid=$61368668`;
 
             try {
                 const response = await fetch(queryUrl);
@@ -255,7 +255,7 @@
             // Lần đầu tải xong, hiển thị tất cả kết quả
             if (allData.length > 0) {
                 filterResults();
-            } else if (SHEET_ID !== 'YOUR_SHEET_ID_HERE') {
+            } else if (SHEET_ID !== '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A') {
                 // Nếu không có lỗi cấu hình nhưng data rỗng (Sheet có thể trống)
                 statusMessage.innerHTML = '<p class="text-lg text-gray-600">Sheet đã tải nhưng không có dữ liệu để hiển thị.</p>';
                 statusMessage.classList.remove('hidden');
@@ -264,3 +264,4 @@
     </script>
 </body>
 </html>
+
