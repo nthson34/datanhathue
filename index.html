@@ -110,7 +110,7 @@
         // ==========================================================
         // KHU VỰC CẤU HÌNH GOOGLE SHEET
         // ==========================================================
-        // LƯU Ý: Đây là ID Sheet được sửa lỗi từ các lần trước và đã được xác nhận là chính xác.
+        // Đã kiểm tra và xác nhận ID Sheet
         const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A'; 
         const SHEET_GID = '61368668'; 
 
@@ -137,7 +137,7 @@
         }
 
         // ==========================================================
-        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (FIX LỖI 'Unknown Type: Col3')
+        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (ĐÃ TỐI ƯU TRUY VẤN)
         // ==========================================================
         async function fetchDataFromSheet() {
             // *** QUAN TRỌNG: Chỉ định SELECT A, B, C, D, E, F, G để tránh lỗi "Unknown Type" ***
@@ -150,10 +150,10 @@
                 const response = await fetch(queryUrl);
                 const text = await response.text();
                 
-                // console.log("2. Phản hồi thô từ API:", text);
-
                 // Cắt chuỗi JSON (luôn là 4 ký tự '/*OK*/' ở đầu và 2 ký tự ở cuối)
                 const jsonText = text.substring(4, text.length - 2);
+                
+                // Kiểm tra nếu text trả về là lỗi API, sẽ bắt lỗi ở hàm JSON.parse
                 const json = JSON.parse(jsonText);
                 
                 const rows = json.table.rows;
@@ -161,8 +161,9 @@
                 const processedData = rows.map(row => {
                     let item = {};
                     
-                    // SỬ DỤNG CHỈ SỐ CỘT (INDEX) TRỰC TIẾP ĐỂ ĐẢM BẢO ỔN ĐỊNH DỮ LIỆU
-                    // 0: TÊN CHỦ, 1: Số điện thoại, 2: ĐỊA CHỈ, 3: LINK ẢNH, 4: GIÁ TIỀN, 5: TIỀN CỌC, 6: Hoa Hồng
+                    // SỬ DỤNG CHỈ SỐ CỘT (INDEX) TRỰC TIẾP (0=A, 1=B,...)
+                    // Cột (A): TÊN CHỦ (Index 0), (B): Số điện thoại (Index 1), (C): ĐỊA CHỈ (Index 2),
+                    // (D): LINK ẢNH (Index 3), (E): GIÁ TIỀN (Index 4), (F): TIỀN CỌC (Index 5), (G): Hoa Hồng (Index 6)
                     const getCellValue = (index) => row.c[index] && row.c[index].v !== null ? String(row.c[index].v) : '';
 
                     item.owner = getCellValue(0);
@@ -188,11 +189,10 @@
                 // Hiển thị thông báo lỗi chi tiết hơn trên giao diện
                 statusMessage.innerHTML = `
                     <p class="text-xl font-bold text-red-600 mb-2">LỖI: KHÔNG THỂ TẢI DỮ LIỆU</p>
-                    <p class="text-base text-gray-700">Nguyên nhân thường gặp:</p>
+                    <p class="text-base text-gray-700">Nguyên nhân thường gặp nhất hiện tại:</p>
                     <ul class="list-disc list-inside text-left mx-auto max-w-sm mt-3 text-sm">
-                        <li>Google Sheet chưa được **Chia sẻ công khai** (Bất kỳ ai có đường liên kết).</li>
-                        <li>Đã xảy ra lỗi đánh máy trong **SHEET_ID** hoặc **SHEET_GID**.</li>
-                        <li>Xem Console (F12) để biết lỗi chi tiết (như lỗi JSON Parse).</li>
+                        <li>**Kiểm tra Quyền Truy Cập:** Google Sheet chưa được **Chia sẻ công khai** (Bất kỳ ai có đường liên kết).</li>
+                        <li>Lỗi cú pháp JSON (Xem chi tiết lỗi trong Console F12).</li>
                     </ul>
                 `;
                 statusMessage.classList.remove('hidden');
