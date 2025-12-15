@@ -18,9 +18,9 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 <body>
 
 <!-- HEADER -->
-<header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white sticky top-0 z-10 shadow">
+<header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-10 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-xl font-extrabold text-center tracking-wide">
+    <h1 class="text-2xl font-extrabold text-center tracking-wide">
       DỮ LIỆU NHÀ THUÊ
     </h1>
 
@@ -96,7 +96,7 @@ async function loadData() {
 function search() {
   const input = $('search');
   const k = input.value.toLowerCase().trim();
-  input.blur(); // Ẩn bàn phím mobile
+  input.blur();
 
   if (!k) return render(DATA);
 
@@ -123,25 +123,38 @@ function render(arr) {
   box.classList.remove('hidden');
 
   box.innerHTML = arr.map(i => `
-    <div class="card bg-white p-4 shadow space-y-3">
+    <div class="card bg-white p-4 shadow space-y-4">
 
-      <!-- ADDRESS -->
-      <div class="font-bold text-indigo-700 text-base">
-        📍 ${i.address}
-      </div>
+      <!-- ADDRESS + PRICE (MAIN FOCUS) -->
+      <div class="flex gap-3">
 
-      <!-- PRICE - MAIN FOCUS -->
-      <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
-        <div class="text-red-600 text-xs uppercase tracking-wide">Giá thuê</div>
-        <div class="text-red-700 text-2xl font-extrabold">
-          ${i.price}
+        <!-- ADDRESS BLOCK -->
+        <a href="${i.image || '#'}" target="_blank"
+          class="flex-1 bg-indigo-50 border border-indigo-200 rounded-xl p-3
+                 font-bold text-indigo-800 leading-snug">
+          <div class="text-xs uppercase text-indigo-500 mb-1">Địa chỉ</div>
+          <div class="text-base">
+            📍 ${i.address}
+          </div>
+        </a>
+
+        <!-- PRICE BLOCK -->
+        <div class="bg-red-50 border border-red-200 rounded-xl p-3
+                    text-center min-w-[110px] flex flex-col justify-center">
+          <div class="text-xs uppercase text-red-500">Giá thuê</div>
+          <div class="text-red-700 text-lg font-extrabold">
+            ${i.price}
+          </div>
         </div>
+
       </div>
 
       <!-- SUB INFO -->
       <div class="flex flex-wrap gap-2">
         <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
-        <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
+        <span class="badge bg-green-100 text-green-700 font-semibold">
+          HH ${i.commission}
+        </span>
       </div>
 
       <!-- ACTION -->
@@ -160,7 +173,8 @@ function render(arr) {
       <!-- FOOTER -->
       <div class="flex justify-between items-center text-sm text-gray-500">
         <span>👤 ${i.owner}</span>
-        ${i.image ? `<a href="${i.image}" target="_blank" class="text-blue-600 font-semibold">📷 Xem hình</a>` : ''}
+        ${i.image ? `<a href="${i.image}" target="_blank"
+          class="text-blue-600 font-semibold">📷 Xem hình</a>` : ''}
       </div>
 
     </div>
