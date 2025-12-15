@@ -1,325 +1,181 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Thông Tin Tài Sản - Hệ Thống Hiện Đại</title>
-    <!-- Tải Tailwind CSS cho giao diện đơn giản, hiện đại, và responsive -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            /* Định nghĩa màu xanh dương chủ đạo */
-            --primary-color: #1e40af; /* Blue 800 */
-            --primary-light: #3b82f6; /* Blue 500 */
-            --search-button-color: #3b82f6; /* Blue 500 */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9; /* Slate 100 */
-        }
-        .header-bg {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1rem 0;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        .card {
-            border-left: 5px solid var(--primary-color); /* Điểm nhấn màu xanh */
-            transition: transform 0.2s, box-shadow 0.2s;
-            border-radius: 0.5rem;
-        }
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.2), 0 4px 6px -2px rgba(30, 64, 175, 0.05);
-        }
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tra cứu tài sản</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body { font-family: Inter, sans-serif; background:#f1f5f9; }
+.card { border-left:4px solid #2563eb; }
+.spinner {
+  width:32px;height:32px;
+  border:4px solid #e5e7eb;
+  border-top:4px solid #2563eb;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
 </head>
+
 <body class="min-h-screen">
 
-    <!-- Header Màu Xanh Dương Mới -->
-    <div class="header-bg sticky top-0 z-20">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6">
-            <h1 class="text-3xl font-extrabold text-white text-center mb-1">
-                Tra Cứu Thông Tin Tài Sản
-            </h1>
-            <p class="text-sm text-center text-blue-200 mb-4">Dữ liệu được truy xuất trực tiếp từ Google Sheet.</p>
-            
-            <div class="flex flex-col sm:flex-row gap-3">
-                <!-- Ô Tìm Kiếm -->
-                <div class="relative flex-grow">
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        placeholder="Đang tải dữ liệu..."
-                        class="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-inner focus:ring-blue-400 focus:border-blue-400 text-gray-800 transition duration-150"
-                        aria-label="Ô tìm kiếm thông tin"
-                        disabled
-                    />
-                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                
-                <!-- Nút Tìm Kiếm -->
-                <button 
-                    id="searchButton"
-                    onclick="filterResults()"
-                    class="bg-search-button-color text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-150 sm:w-auto w-full"
-                    disabled
-                >
-                    Tìm Kiếm
-                </button>
-            </div>
-        </div>
+<!-- HEADER -->
+<header class="bg-blue-800 text-white py-4 sticky top-0 z-10">
+  <div class="max-w-4xl mx-auto px-4">
+    <h1 class="text-2xl font-bold text-center">Tra Cứu Thông Tin Tài Sản</h1>
+    <div class="flex gap-2 mt-4">
+      <input id="search" type="text"
+        placeholder="Nhập tên, địa chỉ, SĐT..."
+        class="flex-1 p-3 rounded-lg text-gray-800"
+        disabled>
+      <button id="btn"
+        class="bg-blue-500 hover:bg-blue-600 px-6 rounded-lg font-semibold"
+        disabled>
+        Tìm
+      </button>
     </div>
-    
-    <!-- Container Chính -->
-    <div class="max-w-4xl mx-auto p-4 sm:p-6 pb-12">
+  </div>
+</header>
 
-        <!-- Khu vực hiển thị thông báo/tải dữ liệu -->
-        <div id="statusMessage" class="bg-white rounded-lg shadow-lg text-center p-10 mt-6">
-            <div class="loading-spinner mx-auto mb-4"></div>
-            <p class="text-lg text-gray-600">Đang kết nối đến Google Sheet...</p>
-        </div>
+<!-- CONTENT -->
+<main class="max-w-4xl mx-auto p-4">
 
-        <!-- Khu vực hiển thị kết quả -->
-        <div id="resultsContainer" class="grid hidden grid-cols-1 gap-6 mt-6">
-            <!-- Thẻ kết quả sẽ được chèn vào đây bởi JavaScript -->
-        </div>
+  <div id="loading" class="bg-white p-8 rounded-lg shadow text-center">
+    <div class="spinner mx-auto mb-4"></div>
+    <p>Đang tải dữ liệu...</p>
+  </div>
 
-        <!-- Thông báo không có kết quả -->
-        <div id="noResults" class="hidden bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6">
-            <p class="text-lg font-semibold">Không tìm thấy kết quả nào phù hợp.</p>
-            <p class="text-sm">Vui lòng thử lại với từ khóa khác (Tên Chủ, Địa Chỉ, SĐT, Giá, Cọc, Hoa Hồng).</p>
+  <div id="list" class="grid gap-4 hidden"></div>
+
+  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
+    Không tìm thấy kết quả phù hợp
+  </div>
+
+</main>
+
+<script>
+/* ================== CONFIG ================== */
+const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
+const GID = '61368668';
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G')}`;
+
+/* ================== STATE ================== */
+let DATA = [];
+
+/* ================== HELPERS ================== */
+const $ = id => document.getElementById(id);
+
+const cleanJSON = t =>
+  JSON.parse(
+    t.replace('/*O_o*/','')
+     .replace('google.visualization.Query.setResponse(','')
+     .slice(0,-2)
+  );
+
+const driveImg = url => {
+  const m = url?.match(/(?:id=|d\/)([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : url;
+};
+
+/* ================== FETCH DATA ================== */
+async function loadData() {
+  try {
+    const res = await fetch(URL);
+    const txt = await res.text();
+    const json = cleanJSON(txt);
+
+    DATA = json.table.rows
+      .map(r => ({
+        owner: r.c?.[0]?.v || '',
+        phone: r.c?.[1]?.v || '',
+        address: r.c?.[2]?.v || '',
+        image: r.c?.[3]?.v || '',
+        price: r.c?.[4]?.v || '',
+        deposit: r.c?.[5]?.v || '',
+        commission: r.c?.[6]?.v || ''
+      }))
+      .filter(i => i.owner);
+
+    $('loading').classList.add('hidden');
+    $('search').disabled = false;
+    $('btn').disabled = false;
+
+    render(DATA);
+
+  } catch (e) {
+    $('loading').innerHTML =
+      '<p class="text-red-600 font-bold">Không thể tải dữ liệu</p>';
+  }
+}
+
+/* ================== RENDER ================== */
+function render(arr) {
+  const box = $('list');
+  box.innerHTML = '';
+  $('empty').classList.add('hidden');
+
+  if (!arr.length) {
+    box.classList.add('hidden');
+    $('empty').classList.remove('hidden');
+    return;
+  }
+
+  box.classList.remove('hidden');
+
+  box.innerHTML = arr.map(i => `
+    <div class="card bg-white p-4 rounded-lg shadow">
+      <div class="flex gap-4">
+        <img src="${driveImg(i.image)}"
+          onerror="this.src='https://placehold.co/300x180?text=NO+IMAGE'"
+          class="w-32 h-24 object-cover rounded">
+
+        <div class="flex-1">
+          <h2 class="font-bold text-blue-700">${i.owner}</h2>
+          <p class="text-sm text-gray-600">${i.address}</p>
+
+          <div class="grid grid-cols-3 text-sm mt-2">
+            <div><b>Giá:</b> <span class="text-red-600">${i.price}</span></div>
+            <div><b>Cọc:</b> ${i.deposit}</div>
+            <div><b>HH:</b> ${i.commission}</div>
+          </div>
+
+          <a href="tel:${i.phone}"
+            class="inline-block mt-2 text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+            📞 ${i.phone}
+          </a>
         </div>
+      </div>
     </div>
+  `).join('');
+}
 
-    <script>
-        // ==========================================================
-        // KHU VỰC CẤU HÌNH GOOGLE SHEET
-        // ==========================================================
-        // Đã kiểm tra và xác nhận ID Sheet
-        const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A'; 
-        const SHEET_GID = '61368668'; 
+/* ================== SEARCH ================== */
+function search() {
+  const k = $('search').value.toLowerCase().trim();
+  if (!k) return render(DATA);
 
-        let allData = [];
+  render(
+    DATA.filter(i =>
+      [i.owner,i.address,i.phone,i.price,i.deposit,i.commission]
+        .join(' ')
+        .toLowerCase()
+        .includes(k)
+    )
+  );
+}
 
-        const resultsContainer = document.getElementById('resultsContainer');
-        const noResultsMessage = document.getElementById('noResults');
-        const searchInput = document.getElementById('searchInput');
-        const searchButton = document.getElementById('searchButton');
-        const statusMessage = document.getElementById('statusMessage');
+/* ================== EVENTS ================== */
+$('btn').onclick = search;
+$('search').addEventListener('keydown', e => e.key === 'Enter' && search());
 
+/* ================== INIT ================== */
+loadData();
+</script>
 
-        // Hàm chuyển đổi link Google Drive thành link nhúng trực tiếp
-        function getDirectDriveLink(link) {
-            if (link && (link.includes('drive.google.com/file/d/') || link.includes('drive.google.com/open?id='))) {
-                const match = link.match(/id=([a-zA-Z0-9_-]+)|d\/([a-zA-Z0-9_-]+)/);
-                const fileId = match ? (match[1] || match[2]) : null;
-
-                if (fileId) {
-                    return `https://drive.google.com/uc?export=view&id=${fileId}`;
-                }
-            }
-            return link;
-        }
-
-        // ==========================================================
-        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (ĐÃ TỐI ƯU TRUY VẤN)
-        // ==========================================================
-        async function fetchDataFromSheet() {
-            // *** QUAN TRỌNG: Chỉ định SELECT A, B, C, D, E, F, G để tránh lỗi "Unknown Type" ***
-            const query = encodeURIComponent('SELECT A, B, C, D, E, F, G');
-            const queryUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;headers=1&gid=${SHEET_GID}&tq=${query}`;
-            
-            console.log("1. Bắt đầu tải dữ liệu từ URL (Truy vấn cột A-G):", queryUrl);
-
-            try {
-                const response = await fetch(queryUrl);
-                const text = await response.text();
-                
-                // Cắt chuỗi JSON (luôn là 4 ký tự '/*OK*/' ở đầu và 2 ký tự ở cuối)
-                const jsonText = text.substring(4, text.length - 2);
-                
-                // Kiểm tra nếu text trả về là lỗi API, sẽ bắt lỗi ở hàm JSON.parse
-                const json = JSON.parse(jsonText);
-                
-                const rows = json.table.rows;
-                
-                const processedData = rows.map(row => {
-                    let item = {};
-                    
-                    // SỬ DỤNG CHỈ SỐ CỘT (INDEX) TRỰC TIẾP (0=A, 1=B,...)
-                    // Cột (A): TÊN CHỦ (Index 0), (B): Số điện thoại (Index 1), (C): ĐỊA CHỈ (Index 2),
-                    // (D): LINK ẢNH (Index 3), (E): GIÁ TIỀN (Index 4), (F): TIỀN CỌC (Index 5), (G): Hoa Hồng (Index 6)
-                    const getCellValue = (index) => row.c[index] && row.c[index].v !== null ? String(row.c[index].v) : '';
-
-                    item.owner = getCellValue(0);
-                    item.phone = getCellValue(1);
-                    item.address = getCellValue(2);
-                    item.image = getCellValue(3);
-                    item.price = getCellValue(4);
-                    item.deposit = getCellValue(5);
-                    item.commission = getCellValue(6);
-                    
-                    return item;
-
-                }).filter(item => item.owner.trim() !== ''); // Loại bỏ các hàng trống (nếu cột owner rỗng)
-
-                console.log(`3. Tải thành công. Số lượng hàng dữ liệu hợp lệ: ${processedData.length}`);
-                console.table(processedData);
-
-                return processedData;
-
-            } catch (error) {
-                console.error("LỖI KẾT NỐI/DỮ LIỆU:", error);
-                
-                // Hiển thị thông báo lỗi chi tiết hơn trên giao diện
-                statusMessage.innerHTML = `
-                    <p class="text-xl font-bold text-red-600 mb-2">LỖI: KHÔNG THỂ TẢI DỮ LIỆU</p>
-                    <p class="text-base text-gray-700">Nguyên nhân thường gặp nhất hiện tại:</p>
-                    <ul class="list-disc list-inside text-left mx-auto max-w-sm mt-3 text-sm">
-                        <li>**Kiểm tra Quyền Truy Cập:** Google Sheet chưa được **Chia sẻ công khai** (Bất kỳ ai có đường liên kết).</li>
-                        <li>Lỗi cú pháp JSON (Xem chi tiết lỗi trong Console F12).</li>
-                    </ul>
-                `;
-                statusMessage.classList.remove('hidden');
-                
-                return [];
-            }
-        }
-
-
-        // Hàm tạo thẻ (card) HTML cho mỗi mục dữ liệu
-        function createCard(item) {
-            const imageUrl = getDirectDriveLink(item.image);
-
-            const card = document.createElement('div');
-            card.className = 'card bg-white p-4 sm:p-6 rounded-xl shadow-md';
-            
-            card.innerHTML = `
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <!-- Khu vực Ảnh/Placeholder -->
-                    <div class="w-full sm:w-1/3 flex-shrink-0">
-                        <img 
-                            src="${imageUrl}" 
-                            alt="Ảnh tài sản của ${item.owner}" 
-                            class="w-full h-32 object-cover rounded-lg mb-3 sm:mb-0 shadow"
-                            onerror="this.onerror=null;this.src='https://placehold.co/400x200/e0e7ff/3b82f6?text=KHONG+CO+ANH';"
-                        >
-                    </div>
-
-                    <!-- Khu vực Chi tiết -->
-                    <div class="w-full sm:w-2/3">
-                        <h2 class="text-xl font-bold text-blue-800 truncate mb-1">${item.owner || '(Không Tên Chủ)'}</h2>
-                        
-                        <p class="text-sm text-gray-700 mb-2 font-medium">
-                            <span class="text-blue-600">Địa chỉ:</span> ${item.address || '(Chưa có địa chỉ)'}
-                        </p>
-
-                        <!-- Thông tin quan trọng: Giá và Cọc -->
-                        <div class="grid grid-cols-3 gap-2 text-sm mb-3 border-t border-b py-2 border-gray-100">
-                            <div>
-                                <span class="block font-semibold text-green-700">Giá thuê:</span>
-                                <span class="text-base font-extrabold text-red-600">${item.price}</span>
-                            </div>
-                            <div>
-                                <span class="block font-semibold text-gray-700">Cọc:</span>
-                                <span class="text-base font-bold text-gray-900">${item.deposit}</span>
-                            </div>
-                            <div>
-                                <span class="block font-semibold text-amber-700">Hoa Hồng:</span>
-                                <span class="text-base font-bold text-amber-600">${item.commission}</span>
-                            </div>
-                        </div>
-
-                        <!-- Thông tin liên hệ -->
-                        <div class="flex justify-start items-center">
-                            <a href="tel:${item.phone}" class="flex items-center text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-full font-semibold transition">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74A1 1 0 0118 16.847V17a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2.153a1 1 0 00-.836-.986l-4.435-.74a1 1 0 00-1.06.54l-.773 1.548a11.037 11.037 0 01-6.105-6.105l1.548-.774a1 1 0 00.54-1.059l-.74-4.435A1 1 0 013.153 3H3a1 1 0 01-1-1z"></path></svg>
-                                Liên hệ: ${item.phone}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `;
-            return card;
-        }
-
-        // Hàm chính để lọc và hiển thị kết quả
-        function filterResults() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            resultsContainer.innerHTML = '';
-            noResultsMessage.classList.add('hidden');
-            
-            const dataToFilter = allData;
-
-            // Lọc dữ liệu, tìm kiếm trên tất cả các cột và không phân biệt chữ hoa/thường
-            const filteredData = dataToFilter.filter(item => {
-                const searchFields = [
-                    item.owner, 
-                    item.address, 
-                    item.phone, 
-                    item.price, 
-                    item.deposit, 
-                    item.commission
-                ].map(field => field ? field.toLowerCase() : '');
-
-                return searchFields.some(field => field.includes(searchTerm));
-            });
-
-            if (filteredData.length > 0) {
-                filteredData.forEach(item => {
-                    resultsContainer.appendChild(createCard(item));
-                });
-                resultsContainer.classList.remove('hidden');
-            } else {
-                noResultsMessage.classList.remove('hidden');
-                resultsContainer.classList.add('hidden');
-            }
-        }
-
-        // Khởi tạo và tải dữ liệu
-        window.onload = async function() {
-            const data = await fetchDataFromSheet();
-            allData = data;
-            
-            // Bắt đầu xử lý giao diện sau khi tải
-            if (allData.length > 0) {
-                // Tải thành công
-                statusMessage.classList.add('hidden');
-                searchInput.disabled = false;
-                searchButton.disabled = false;
-                searchInput.placeholder = 'Nhập từ khóa (Tên Chủ, Địa Chỉ, SĐT,...) để tra cứu...';
-                
-                // Hiển thị tất cả dữ liệu ban đầu
-                filterResults();
-
-            } else {
-                // Tải thất bại hoặc Sheet rỗng, đã hiển thị thông báo lỗi/trạng thái ở hàm fetchDataFromSheet()
-                searchInput.placeholder = 'Lỗi tải dữ liệu, không thể tìm kiếm.';
-            }
-
-            // *** Thêm sự kiện nhấn phím ENTER để tìm kiếm ***
-            searchInput.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter' && !searchInput.disabled) {
-                    event.preventDefault(); 
-                    filterResults();
-                }
-            });
-        };
-    </script>
 </body>
 </html>
