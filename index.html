@@ -108,9 +108,9 @@
 
     <script>
         // ==========================================================
-        // KHU VỰC CẤU HÌNH GOOGLE SHEET (ĐÃ SỬA LỖI ĐÁNH MÁY)
+        // KHU VỰC CẤU HÌNH GOOGLE SHEET
         // ==========================================================
-        // LƯU Ý: Đã sửa lỗi đánh máy (typo) trong ID Sheet
+        // LƯU Ý: Đây là ID Sheet được sửa lỗi từ các lần trước và đã được xác nhận là chính xác.
         const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A'; 
         const SHEET_GID = '61368668'; 
 
@@ -130,7 +130,6 @@
                 const fileId = match ? (match[1] || match[2]) : null;
 
                 if (fileId) {
-                    // console.log(`Chuyển đổi Link Drive: ${link} -> ID: ${fileId}`);
                     return `https://drive.google.com/uc?export=view&id=${fileId}`;
                 }
             }
@@ -138,11 +137,14 @@
         }
 
         // ==========================================================
-        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (ĐÃ THÊM LOGGING)
+        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (FIX LỖI 'Unknown Type: Col3')
         // ==========================================================
         async function fetchDataFromSheet() {
-            const queryUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;headers=1&gid=${SHEET_GID}`;
-            console.log("1. Bắt đầu tải dữ liệu từ URL:", queryUrl);
+            // *** QUAN TRỌNG: Chỉ định SELECT A, B, C, D, E, F, G để tránh lỗi "Unknown Type" ***
+            const query = encodeURIComponent('SELECT A, B, C, D, E, F, G');
+            const queryUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;headers=1&gid=${SHEET_GID}&tq=${query}`;
+            
+            console.log("1. Bắt đầu tải dữ liệu từ URL (Truy vấn cột A-G):", queryUrl);
 
             try {
                 const response = await fetch(queryUrl);
@@ -150,7 +152,7 @@
                 
                 // console.log("2. Phản hồi thô từ API:", text);
 
-                // Cắt chuỗi JSON
+                // Cắt chuỗi JSON (luôn là 4 ký tự '/*OK*/' ở đầu và 2 ký tự ở cuối)
                 const jsonText = text.substring(4, text.length - 2);
                 const json = JSON.parse(jsonText);
                 
@@ -176,7 +178,7 @@
                 }).filter(item => item.owner.trim() !== ''); // Loại bỏ các hàng trống (nếu cột owner rỗng)
 
                 console.log(`3. Tải thành công. Số lượng hàng dữ liệu hợp lệ: ${processedData.length}`);
-                // console.table(processedData);
+                console.table(processedData);
 
                 return processedData;
 
@@ -190,7 +192,7 @@
                     <ul class="list-disc list-inside text-left mx-auto max-w-sm mt-3 text-sm">
                         <li>Google Sheet chưa được **Chia sẻ công khai** (Bất kỳ ai có đường liên kết).</li>
                         <li>Đã xảy ra lỗi đánh máy trong **SHEET_ID** hoặc **SHEET_GID**.</li>
-                        <li>Cấu trúc dữ liệu trong Sheet không khớp với các cột (A-G).</li>
+                        <li>Xem Console (F12) để biết lỗi chi tiết (như lỗi JSON Parse).</li>
                     </ul>
                 `;
                 statusMessage.classList.remove('hidden');
