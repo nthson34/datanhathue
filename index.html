@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tra cứu tài sản - Môi giới</title>
+<title>DỮ LIỆU NHÀ THUÊ</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 body { font-family: Inter, sans-serif; background:#f1f5f9; }
@@ -20,14 +20,20 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 <!-- HEADER -->
 <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white sticky top-0 z-10 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-xl font-bold text-center">📊 Tra Cứu Tài Sản (Môi Giới)</h1>
+    <h1 class="text-xl font-extrabold text-center tracking-wide">
+      DỮ LIỆU NHÀ THUÊ
+    </h1>
 
     <div class="flex gap-2">
       <input id="search" type="text"
         placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
-        class="flex-1 p-3 rounded-xl text-gray-800 text-sm" disabled>
+        class="flex-1 p-3 rounded-xl text-gray-800 text-base"
+        inputmode="search"
+        disabled>
+
       <button id="btn"
-        class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>
+        class="bg-white/20 px-4 rounded-xl font-semibold text-sm"
+        disabled>
         Tìm
       </button>
     </div>
@@ -86,16 +92,20 @@ async function loadData() {
   render(DATA);
 }
 
-/* COPY FEEDBACK */
-function copyPhone(btn, phone) {
-  navigator.clipboard.writeText(phone);
-  const old = btn.innerHTML;
-  btn.innerHTML = '✓ Đã copy';
-  btn.classList.add('bg-green-200');
-  setTimeout(() => {
-    btn.innerHTML = old;
-    btn.classList.remove('bg-green-200');
-  }, 1500);
+/* SEARCH */
+function search() {
+  const input = $('search');
+  const k = input.value.toLowerCase().trim();
+  input.blur(); // Ẩn bàn phím mobile
+
+  if (!k) return render(DATA);
+
+  render(DATA.filter(i =>
+    [i.address, i.phone, i.price, i.deposit, i.commission]
+      .join(' ')
+      .toLowerCase()
+      .includes(k)
+  ));
 }
 
 /* RENDER */
@@ -115,27 +125,39 @@ function render(arr) {
   box.innerHTML = arr.map(i => `
     <div class="card bg-white p-4 shadow space-y-3">
 
+      <!-- ADDRESS -->
       <div class="font-bold text-indigo-700 text-base">
         📍 ${i.address}
       </div>
 
+      <!-- PRICE - MAIN FOCUS -->
+      <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+        <div class="text-red-600 text-xs uppercase tracking-wide">Giá thuê</div>
+        <div class="text-red-700 text-2xl font-extrabold">
+          ${i.price}
+        </div>
+      </div>
+
+      <!-- SUB INFO -->
       <div class="flex flex-wrap gap-2">
-        <span class="badge bg-red-100 text-red-600 font-semibold">💰 ${i.price}</span>
         <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
         <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
       </div>
 
+      <!-- ACTION -->
       <div class="flex gap-2">
         <a href="tel:${i.phone}"
           class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
           📞 GỌI NGAY (${i.phone})
         </a>
-        <button onclick="copyPhone(this,'${i.phone}')"
+
+        <button onclick="navigator.clipboard.writeText('${i.phone}')"
           class="bg-gray-200 px-3 rounded-xl text-sm">
           📋
         </button>
       </div>
 
+      <!-- FOOTER -->
       <div class="flex justify-between items-center text-sm text-gray-500">
         <span>👤 ${i.owner}</span>
         ${i.image ? `<a href="${i.image}" target="_blank" class="text-blue-600 font-semibold">📷 Xem hình</a>` : ''}
@@ -145,19 +167,7 @@ function render(arr) {
   `).join('');
 }
 
-/* SEARCH */
-function search() {
-  const k = $('search').value.toLowerCase().trim();
-  if (!k) return render(DATA);
-
-  render(DATA.filter(i =>
-    [i.address, i.phone, i.price, i.deposit, i.commission]
-      .join(' ')
-      .toLowerCase()
-      .includes(k)
-  ));
-}
-
+/* EVENTS */
 $('btn').onclick = search;
 $('search').addEventListener('keydown', e => e.key === 'Enter' && search());
 
