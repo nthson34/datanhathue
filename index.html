@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tra Cứu Thông Tin Tài Sản - Hệ Thống Hiện Đại</title>
+    <!-- Tải Tailwind CSS cho giao diện đơn giản, hiện đại, và responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -49,6 +50,7 @@
 </head>
 <body class="min-h-screen">
 
+    <!-- Header Màu Xanh Dương Mới -->
     <div class="header-bg sticky top-0 z-20">
         <div class="max-w-4xl mx-auto px-4 sm:px-6">
             <h1 class="text-3xl font-extrabold text-white text-center mb-1">
@@ -57,6 +59,7 @@
             <p class="text-sm text-center text-blue-200 mb-4">Dữ liệu được truy xuất trực tiếp từ Google Sheet.</p>
             
             <div class="flex flex-col sm:flex-row gap-3">
+                <!-- Ô Tìm Kiếm -->
                 <div class="relative flex-grow">
                     <input 
                         type="text" 
@@ -69,6 +72,7 @@
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
                 
+                <!-- Nút Tìm Kiếm -->
                 <button 
                     id="searchButton"
                     onclick="filterResults()"
@@ -81,16 +85,21 @@
         </div>
     </div>
     
+    <!-- Container Chính -->
     <div class="max-w-4xl mx-auto p-4 sm:p-6 pb-12">
 
+        <!-- Khu vực hiển thị thông báo/tải dữ liệu -->
         <div id="statusMessage" class="bg-white rounded-lg shadow-lg text-center p-10 mt-6">
             <div class="loading-spinner mx-auto mb-4"></div>
             <p class="text-lg text-gray-600">Đang kết nối đến Google Sheet...</p>
         </div>
 
+        <!-- Khu vực hiển thị kết quả -->
         <div id="resultsContainer" class="grid hidden grid-cols-1 gap-6 mt-6">
-            </div>
+            <!-- Thẻ kết quả sẽ được chèn vào đây bởi JavaScript -->
+        </div>
 
+        <!-- Thông báo không có kết quả -->
         <div id="noResults" class="hidden bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-6">
             <p class="text-lg font-semibold">Không tìm thấy kết quả nào phù hợp.</p>
             <p class="text-sm">Vui lòng thử lại với từ khóa khác (Tên Chủ, Địa Chỉ, SĐT, Giá, Cọc, Hoa Hồng).</p>
@@ -99,9 +108,10 @@
 
     <script>
         // ==========================================================
-        // KHU VỰC CẤU HÌNH GOOGLE SHEET
+        // KHU VỰC CẤU HÌNH GOOGLE SHEET (ĐÃ SỬA LỖI ĐÁNH MÁY)
         // ==========================================================
-        const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqax7NzXVYYphe_q2A'; 
+        // LƯU Ý: Đã sửa lỗi đánh máy (typo) trong ID Sheet
+        const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A'; 
         const SHEET_GID = '61368668'; 
 
         let allData = [];
@@ -120,6 +130,7 @@
                 const fileId = match ? (match[1] || match[2]) : null;
 
                 if (fileId) {
+                    // console.log(`Chuyển đổi Link Drive: ${link} -> ID: ${fileId}`);
                     return `https://drive.google.com/uc?export=view&id=${fileId}`;
                 }
             }
@@ -127,16 +138,18 @@
         }
 
         // ==========================================================
-        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (ĐÃ SỬA LỖI TRUY XUẤT)
+        // HÀM KẾT NỐI VÀ LẤY DỮ LIỆU TỪ GOOGLE SHEET (ĐÃ THÊM LOGGING)
         // ==========================================================
         async function fetchDataFromSheet() {
-            // Sử dụng headers=1 để đảm bảo hàng 1 là tiêu đề và dữ liệu bắt đầu từ hàng 2
             const queryUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;headers=1&gid=${SHEET_GID}`;
+            console.log("1. Bắt đầu tải dữ liệu từ URL:", queryUrl);
 
             try {
                 const response = await fetch(queryUrl);
                 const text = await response.text();
                 
+                // console.log("2. Phản hồi thô từ API:", text);
+
                 // Cắt chuỗi JSON
                 const jsonText = text.substring(4, text.length - 2);
                 const json = JSON.parse(jsonText);
@@ -145,7 +158,8 @@
                 
                 const processedData = rows.map(row => {
                     let item = {};
-                    // *** SỬ DỤNG CHỈ SỐ CỘT (INDEX) TRỰC TIẾP ĐỂ ĐẢM BẢO ỔN ĐỊNH DỮ LIỆU ***
+                    
+                    // SỬ DỤNG CHỈ SỐ CỘT (INDEX) TRỰC TIẾP ĐỂ ĐẢM BẢO ỔN ĐỊNH DỮ LIỆU
                     // 0: TÊN CHỦ, 1: Số điện thoại, 2: ĐỊA CHỈ, 3: LINK ẢNH, 4: GIÁ TIỀN, 5: TIỀN CỌC, 6: Hoa Hồng
                     const getCellValue = (index) => row.c[index] && row.c[index].v !== null ? String(row.c[index].v) : '';
 
@@ -161,11 +175,26 @@
 
                 }).filter(item => item.owner.trim() !== ''); // Loại bỏ các hàng trống (nếu cột owner rỗng)
 
+                console.log(`3. Tải thành công. Số lượng hàng dữ liệu hợp lệ: ${processedData.length}`);
+                // console.table(processedData);
+
                 return processedData;
 
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu từ Google Sheet:", error);
-                statusMessage.innerHTML = `<p class="text-lg font-bold text-red-600">LỖI KẾT NỐI/DỮ LIỆU:</p><p class="text-sm text-red-500">Không thể tải dữ liệu. Vui lòng kiểm tra ID Sheet, GID và đảm bảo quyền truy cập là công khai (Anyone with the link).</p>`;
+                console.error("LỖI KẾT NỐI/DỮ LIỆU:", error);
+                
+                // Hiển thị thông báo lỗi chi tiết hơn trên giao diện
+                statusMessage.innerHTML = `
+                    <p class="text-xl font-bold text-red-600 mb-2">LỖI: KHÔNG THỂ TẢI DỮ LIỆU</p>
+                    <p class="text-base text-gray-700">Nguyên nhân thường gặp:</p>
+                    <ul class="list-disc list-inside text-left mx-auto max-w-sm mt-3 text-sm">
+                        <li>Google Sheet chưa được **Chia sẻ công khai** (Bất kỳ ai có đường liên kết).</li>
+                        <li>Đã xảy ra lỗi đánh máy trong **SHEET_ID** hoặc **SHEET_GID**.</li>
+                        <li>Cấu trúc dữ liệu trong Sheet không khớp với các cột (A-G).</li>
+                    </ul>
+                `;
+                statusMessage.classList.remove('hidden');
+                
                 return [];
             }
         }
@@ -180,6 +209,7 @@
             
             card.innerHTML = `
                 <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- Khu vực Ảnh/Placeholder -->
                     <div class="w-full sm:w-1/3 flex-shrink-0">
                         <img 
                             src="${imageUrl}" 
@@ -189,13 +219,15 @@
                         >
                     </div>
 
+                    <!-- Khu vực Chi tiết -->
                     <div class="w-full sm:w-2/3">
-                        <h2 class="text-xl font-bold text-blue-800 truncate mb-1">${item.owner}</h2>
+                        <h2 class="text-xl font-bold text-blue-800 truncate mb-1">${item.owner || '(Không Tên Chủ)'}</h2>
                         
                         <p class="text-sm text-gray-700 mb-2 font-medium">
-                            <span class="text-blue-600">Địa chỉ:</span> ${item.address}
+                            <span class="text-blue-600">Địa chỉ:</span> ${item.address || '(Chưa có địa chỉ)'}
                         </p>
 
+                        <!-- Thông tin quan trọng: Giá và Cọc -->
                         <div class="grid grid-cols-3 gap-2 text-sm mb-3 border-t border-b py-2 border-gray-100">
                             <div>
                                 <span class="block font-semibold text-green-700">Giá thuê:</span>
@@ -211,6 +243,7 @@
                             </div>
                         </div>
 
+                        <!-- Thông tin liên hệ -->
                         <div class="flex justify-start items-center">
                             <a href="tel:${item.phone}" class="flex items-center text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-full font-semibold transition">
                                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74A1 1 0 0118 16.847V17a1 1 0 01-1 1h-1a1 1 0 01-1-1v-2.153a1 1 0 00-.836-.986l-4.435-.74a1 1 0 00-1.06.54l-.773 1.548a11.037 11.037 0 01-6.105-6.105l1.548-.774a1 1 0 00.54-1.059l-.74-4.435A1 1 0 013.153 3H3a1 1 0 01-1-1z"></path></svg>
@@ -223,16 +256,16 @@
             return card;
         }
 
-        // Hàm chính để lọc và hiển thị kết quả (Đã mở rộng phạm vi tìm kiếm)
+        // Hàm chính để lọc và hiển thị kết quả
         function filterResults() {
             const searchTerm = searchInput.value.toLowerCase().trim();
             resultsContainer.innerHTML = '';
             noResultsMessage.classList.add('hidden');
-
+            
             const dataToFilter = allData;
 
+            // Lọc dữ liệu, tìm kiếm trên tất cả các cột và không phân biệt chữ hoa/thường
             const filteredData = dataToFilter.filter(item => {
-                // *** Mở rộng phạm vi tìm kiếm (Toàn bảng tính) và không phân biệt chữ hoa/thường ***
                 const searchFields = [
                     item.owner, 
                     item.address, 
@@ -261,19 +294,26 @@
             const data = await fetchDataFromSheet();
             allData = data;
             
-            // Ẩn thông báo tải và hiện khung tìm kiếm/kết quả
-            statusMessage.classList.add('hidden');
-            searchInput.disabled = false;
-            searchButton.disabled = false;
-            searchInput.placeholder = 'Nhập từ khóa (Tên Chủ, Địa Chỉ, SĐT,...) để tra cứu...';
+            // Bắt đầu xử lý giao diện sau khi tải
+            if (allData.length > 0) {
+                // Tải thành công
+                statusMessage.classList.add('hidden');
+                searchInput.disabled = false;
+                searchButton.disabled = false;
+                searchInput.placeholder = 'Nhập từ khóa (Tên Chủ, Địa Chỉ, SĐT,...) để tra cứu...';
+                
+                // Hiển thị tất cả dữ liệu ban đầu
+                filterResults();
 
-            // Kích hoạt tìm kiếm ban đầu (hiển thị tất cả dữ liệu)
-            filterResults();
+            } else {
+                // Tải thất bại hoặc Sheet rỗng, đã hiển thị thông báo lỗi/trạng thái ở hàm fetchDataFromSheet()
+                searchInput.placeholder = 'Lỗi tải dữ liệu, không thể tìm kiếm.';
+            }
 
-            // *** Thêm sự kiện nhấn phím ENTER để tìm kiếm (Goal 3) ***
+            // *** Thêm sự kiện nhấn phím ENTER để tìm kiếm ***
             searchInput.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault(); // Ngăn chặn hành vi mặc định của Enter (nếu có)
+                if (event.key === 'Enter' && !searchInput.disabled) {
+                    event.preventDefault(); 
                     filterResults();
                 }
             });
