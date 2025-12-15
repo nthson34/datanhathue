@@ -12,6 +12,14 @@
 body { font-family: Inter, sans-serif; background:#f1f5f9; }
 .card { border-radius:18px; }
 .badge { font-size:12px; padding:4px 10px; border-radius:999px; }
+
+/* giới hạn địa chỉ 2 dòng */
+.line-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>
 </head>
 
@@ -108,6 +116,22 @@ function search() {
   ));
 }
 
+/* COPY PHONE WITH FEEDBACK */
+function copyPhone(btn, phone) {
+  navigator.clipboard.writeText(phone).then(() => {
+    const old = btn.innerHTML;
+    btn.innerHTML = '✓ Đã copy';
+    btn.classList.remove('bg-gray-200');
+    btn.classList.add('bg-green-200','text-green-800');
+
+    setTimeout(() => {
+      btn.innerHTML = old;
+      btn.classList.remove('bg-green-200','text-green-800');
+      btn.classList.add('bg-gray-200');
+    }, 1500);
+  });
+}
+
 /* RENDER */
 function render(arr) {
   const box = $('list');
@@ -123,30 +147,21 @@ function render(arr) {
   box.classList.remove('hidden');
 
   box.innerHTML = arr.map(i => `
-    <div class="card bg-white p-4 shadow space-y-4">
+    <div class="card bg-white p-4 shadow space-y-3">
 
-      <!-- ADDRESS + PRICE (MAIN FOCUS) -->
-      <div class="flex gap-3">
-
-        <!-- ADDRESS BLOCK -->
-        <a href="${i.image || '#'}" target="_blank"
-          class="flex-1 bg-indigo-50 border border-indigo-200 rounded-xl p-3
-                 font-bold text-indigo-800 leading-snug">
-          <div class="text-xs uppercase text-indigo-500 mb-1">Địa chỉ</div>
-          <div class="text-base">
-            📍 ${i.address}
-          </div>
-        </a>
-
-        <!-- PRICE BLOCK -->
-        <div class="bg-red-50 border border-red-200 rounded-xl p-3
-                    text-center min-w-[110px] flex flex-col justify-center">
-          <div class="text-xs uppercase text-red-500">Giá thuê</div>
-          <div class="text-red-700 text-lg font-extrabold">
-            ${i.price}
-          </div>
+      <!-- ADDRESS BLOCK -->
+      <a href="${i.image || '#'}" target="_blank"
+        class="block bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+        <div class="text-xs uppercase text-indigo-500 mb-1">Địa chỉ</div>
+        <div class="font-bold text-indigo-800 text-base line-2">
+          📍 ${i.address}
         </div>
+      </a>
 
+      <!-- PRICE BLOCK -->
+      <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200
+                  text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
+        💰 Giá thuê: ${i.price}
       </div>
 
       <!-- SUB INFO -->
@@ -164,8 +179,8 @@ function render(arr) {
           📞 GỌI NGAY (${i.phone})
         </a>
 
-        <button onclick="navigator.clipboard.writeText('${i.phone}')"
-          class="bg-gray-200 px-3 rounded-xl text-sm">
+        <button onclick="copyPhone(this,'${i.phone}')"
+          class="bg-gray-200 px-3 rounded-xl text-sm font-semibold">
           📋
         </button>
       </div>
