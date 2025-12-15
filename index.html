@@ -3,102 +3,84 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tra cứu tài sản</title>
+<title>Tra cứu tài sản - Môi giới</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
 body { font-family: Inter, sans-serif; background:#f1f5f9; }
-.card { border-left:4px solid #2563eb; }
-.badge { font-size:12px; padding:2px 8px; border-radius:999px; }
+.card { border-radius:18px; }
+.badge { font-size:12px; padding:4px 10px; border-radius:999px; }
 </style>
 </head>
 
 <body class="min-h-screen">
 
 <!-- HEADER -->
-<header class="bg-blue-700 text-white sticky top-0 z-10 shadow">
+<header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white sticky top-0 z-10 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-xl font-bold text-center">Tra Cứu Thông Tin Tài Sản</h1>
+    <h1 class="text-xl font-bold text-center">📊 Tra Cứu Tài Sản (Môi Giới)</h1>
 
-    <div class="flex gap-2">
-      <input id="search" type="text"
-        placeholder="Tên, địa chỉ, SĐT, giá..."
-        class="flex-1 p-3 rounded-lg text-gray-800 text-sm"
-        disabled>
-      <button id="btn"
-        class="bg-blue-500 hover:bg-blue-600 px-4 rounded-lg font-semibold text-sm"
-        disabled>
-        Tìm
-      </button>
-    </div>
+    <input id="search" type="text"
+      placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
+      class="w-full p-3 rounded-xl text-gray-800 text-sm"
+      disabled>
   </div>
 </header>
 
 <!-- CONTENT -->
-<main class="max-w-3xl mx-auto p-3">
+<main class="max-w-3xl mx-auto p-3 space-y-4">
 
-  <div id="loading" class="bg-white p-6 rounded-lg shadow text-center">
+  <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
     <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
     <p class="text-sm">Đang tải dữ liệu...</p>
   </div>
 
-  <div id="list" class="space-y-3 hidden"></div>
+  <div id="list" class="space-y-4 hidden"></div>
 
-  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4 text-sm">
-    Không tìm thấy kết quả phù hợp
+  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
+    Không tìm thấy tài sản phù hợp
   </div>
 
 </main>
 
 <script>
-/* ================== CONFIG ================== */
+/* CONFIG */
 const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID = '61368668';
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G')}`;
 
-/* ================== STATE ================== */
 let DATA = [];
-
-/* ================== HELPERS ================== */
 const $ = id => document.getElementById(id);
 
-const cleanJSON = t =>
-  JSON.parse(
-    t.replace('/*O_o*/','')
-     .replace('google.visualization.Query.setResponse(','')
-     .slice(0,-2)
-  );
+const cleanJSON = t => JSON.parse(
+  t.replace('/*O_o*/','')
+   .replace('google.visualization.Query.setResponse(','')
+   .slice(0,-2)
+);
 
-/* ================== FETCH DATA ================== */
 async function loadData() {
-  try {
-    const res = await fetch(URL);
-    const txt = await res.text();
-    const json = cleanJSON(txt);
+  const res = await fetch(URL);
+  const txt = await res.text();
+  const json = cleanJSON(txt);
 
-    DATA = json.table.rows.map(r => ({
-      owner: r.c?.[0]?.v || '',
-      phone: r.c?.[1]?.v || '',
-      address: r.c?.[2]?.v || '',
-      image: r.c?.[3]?.v || '',
-      price: r.c?.[4]?.v || '',
-      deposit: r.c?.[5]?.v || '',
-      commission: r.c?.[6]?.v || ''
-    })).filter(i => i.owner);
+  DATA = json.table.rows.map(r => ({
+    owner: r.c?.[0]?.v || '',
+    phone: r.c?.[1]?.v || '',
+    address: r.c?.[2]?.v || '',
+    image: r.c?.[3]?.v || '',
+    price: r.c?.[4]?.v || '',
+    deposit: r.c?.[5]?.v || '',
+    commission: r.c?.[6]?.v || ''
+  })).filter(i => i.address);
 
-    $('loading').classList.add('hidden');
-    $('search').disabled = false;
-    $('btn').disabled = false;
-
-    render(DATA);
-  } catch (e) {
-    $('loading').innerHTML = '<p class="text-red-600 font-bold">Không thể tải dữ liệu</p>';
-  }
+  $('loading').classList.add('hidden');
+  $('search').disabled = false;
+  render(DATA);
 }
 
-/* ================== RENDER ================== */
+/* RENDER */
 function render(arr) {
   const box = $('list');
   box.innerHTML = '';
@@ -113,52 +95,53 @@ function render(arr) {
   box.classList.remove('hidden');
 
   box.innerHTML = arr.map(i => `
-    <div class="card bg-white p-4 rounded-lg shadow space-y-2">
+    <div class="card bg-white p-4 shadow space-y-3">
 
-      <div>
-        <h2 class="font-bold text-blue-700">${i.owner}</h2>
-        <p class="text-gray-600 text-sm">${i.address}</p>
+      <!-- ADDRESS -->
+      <div class="text-indigo-700 font-bold text-base">
+        📍 ${i.address}
       </div>
 
-      <div class="flex flex-wrap gap-2 text-sm">
-        <span class="badge bg-red-100 text-red-600">Giá: ${i.price}</span>
-        <span class="badge bg-gray-100">Cọc: ${i.deposit}</span>
-        <span class="badge bg-blue-100 text-blue-700">HH: ${i.commission}</span>
+      <!-- PRICE + COMMISSION -->
+      <div class="flex flex-wrap gap-2">
+        <span class="badge bg-red-100 text-red-600 font-semibold">💰 ${i.price}</span>
+        <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
+        <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 text-sm">
-        <a href="tel:${i.phone}" class="bg-green-100 text-green-700 px-3 py-1 rounded-full">📞 ${i.phone}</a>
-
-        ${i.image ? `
-          <a href="${i.image}" target="_blank" class="text-blue-600 underline">📁 Hình ảnh</a>
-        ` : `
-          <span class="text-gray-400 italic">Không có hình</span>
-        `}
+      <!-- PHONE -->
+      <div class="flex gap-2">
+        <a href="tel:${i.phone}"
+          class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
+          📞 GỌI NGAY
+        </a>
+        <button onclick="navigator.clipboard.writeText('${i.phone}')"
+          class="bg-gray-200 px-3 rounded-xl">
+          📋
+        </button>
       </div>
+
+      <!-- FOOTER -->
+      <div class="flex justify-between items-center text-sm text-gray-500">
+        <span>👤 ${i.owner}</span>
+        ${i.image ? `<a href="${i.image}" target="_blank" class="text-blue-600 font-semibold">📷 Xem hình</a>` : ''}
+      </div>
+
     </div>
   `).join('');
 }
 
-/* ================== SEARCH ================== */
-function search() {
-  const k = $('search').value.toLowerCase().trim();
-  if (!k) return render(DATA);
+/* SEARCH */
+$('search').addEventListener('input', () => {
+  const k = $('search').value.toLowerCase();
+  render(DATA.filter(i =>
+    [i.address,i.phone,i.price,i.deposit,i.commission]
+      .join(' ')
+      .toLowerCase()
+      .includes(k)
+  ));
+});
 
-  render(
-    DATA.filter(i =>
-      [i.owner,i.address,i.phone,i.price,i.deposit,i.commission]
-        .join(' ')
-        .toLowerCase()
-        .includes(k)
-    )
-  );
-}
-
-/* ================== EVENTS ================== */
-$('btn').onclick = search;
-$('search').addEventListener('keydown', e => e.key === 'Enter' && search());
-
-/* ================== INIT ================== */
 loadData();
 </script>
 
