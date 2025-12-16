@@ -54,9 +54,10 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 </main>
 
 <script>
-/* CONFIG */
+/* ================= CONFIG ================= */
 const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID = '61368668';
+
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${
   encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')
 }`;
@@ -64,25 +65,49 @@ const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GI
 const $ = id => document.getElementById(id);
 let DATA = [];
 
-/* CLEAN JSON */
-const cleanJSON = t => JSON.parse(
-  t.replace('/*O_o*/','')
-   .replace('google.visualization.Query.setResponse(','')
-   .slice(0,-2)
-);
-
-/* DRIVE → IMAGE */
-function driveToImage(url) {
-  if (!url) return '';
-  const m = url.match(/\/d\/([^/]+)\//);
-  return m ? `https://drive.google.com/uc?id=${m[1]}` : '';
+/* ============ CLEAN GOOGLE JSON ============ */
+function cleanJSON(text) {
+  return JSON.parse(
+    text
+      .replace('/*O_o*/', '')
+      .replace('google.visualization.Query.setResponse(', '')
+      .slice(0, -2)
+  );
 }
 
-/* LOAD DATA */
+/* ============ DRIVE LINK → IMAGE ============ */
+function driveToImage(url) {
+  if (!url) return '';
+
+  let id = '';
+
+  // /file/d/FILE_ID/view
+  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) id = m[1];
+
+  // open?id=FILE_ID
+  if (!id) {
+    m = url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (m) id = m[1];
+  }
+
+  // uc?id=FILE_ID
+  if (!id) {
+    m = url.match(/uc\?id=([a-zA-Z0-9_-]+)/);
+    if (m) id = m[1];
+  }
+
+  if (!id) return '';
+
+  // dùng thumbnail để load ổn định
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+}
+
+/* ================= LOAD DATA ================= */
 async function loadData() {
   const res = await fetch(URL);
-  const txt = await res.text();
-  const json = cleanJSON(txt);
+  const text = await res.text();
+  const json = cleanJSON(text);
 
   DATA = json.table.rows.map(r => {
     const images = [
@@ -106,24 +131,28 @@ async function loadData() {
   $('loading').classList.add('hidden');
   $('search').disabled = false;
   $('btn').disabled = false;
+
   render(DATA);
 }
 
-/* SEARCH */
+/* ================= SEARCH ================= */
 function search() {
   const k = $('search').value.toLowerCase().trim();
   $('search').blur();
+
   if (!k) return render(DATA);
 
-  render(DATA.filter(i =>
-    [i.address, i.phone, i.price, i.deposit, i.commission]
-      .join(' ')
-      .toLowerCase()
-      .includes(k)
-  ));
+  render(
+    DATA.filter(i =>
+      [i.address, i.phone, i.price, i.deposit, i.commission]
+        .join(' ')
+        .toLowerCase()
+        .includes(k)
+    )
+  );
 }
 
-/* COPY PHONE */
+/* ================= COPY PHONE ================= */
 function copyPhone(btn, phone) {
   navigator.clipboard.writeText(phone).then(() => {
     const old = btn.innerHTML;
@@ -136,7 +165,7 @@ function copyPhone(btn, phone) {
   });
 }
 
-/* RENDER */
+/* ================= RENDER ================= */
 function render(arr) {
   const box = $('list');
   box.innerHTML = '';
@@ -155,19 +184,13 @@ function render(arr) {
 
       ${i.images.length ? `
         <div class="grid grid-cols-3 gap-2">
-          ${i.images.map((img, idx) => {
-            let span = 'col-span-3';
-            if (i.images.length === 2) span = 'col-span-3 md:col-span-1';
-            if (i.images.length === 3) span = 'col-span-1';
-
-            return `
-              <a href="${img}" target="_blank" class="${span}">
-                <img src="${img}"
-                  class="w-full h-32 object-cover rounded-xl border"
-                  loading="lazy">
-              </a>
-            `;
-          }).join('')}
+          ${i.images.map(img => `
+            <a href="${img}" target="_blank">
+              <img src="${img}"
+                class="w-full h-32 object-cover rounded-xl border"
+                loading="lazy">
+            </a>
+          `).join('')}
         </div>
       ` : ''}
 
@@ -206,7 +229,7 @@ function render(arr) {
   `).join('');
 }
 
-/* EVENTS */
+/* ================= EVENTS ================= */
 $('btn').onclick = search;
 $('search').addEventListener('keydown', e => e.key === 'Enter' && search());
 
