@@ -12,11 +12,21 @@
 body { font-family: Inter, sans-serif; background:#f1f5f9; }
 .card { border-radius:18px; }
 .badge { font-size:12px; padding:4px 10px; border-radius:999px; }
-.line-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+
+.line-2{
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+/* ===== MODAL IMAGE ===== */
+#imgModal {
+  touch-action: none;
+}
+#modalImg {
+  transition: transform .15s ease;
+  transform-origin: center center;
 }
 </style>
 </head>
@@ -25,33 +35,27 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 
 <header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-10 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-2xl font-extrabold text-center tracking-wide">DỮ LIỆU NHÀ THUÊ</h1>
-    <div class="flex gap-2">
-      <input id="search" type="text"
-        placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
-        class="flex-1 p-3 rounded-xl text-gray-800"
-        disabled>
-      <button id="btn"
-        class="bg-white/20 px-4 rounded-xl font-semibold text-sm"
-        disabled>Tìm</button>
-    </div>
+    <h1 class="text-2xl font-extrabold text-center">DỮ LIỆU NHÀ THUÊ</h1>
   </div>
 </header>
 
 <main class="max-w-3xl mx-auto p-3 space-y-4">
-
-  <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
-    <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
-    <p class="text-sm">Đang tải dữ liệu...</p>
-  </div>
-
-  <div id="list" class="space-y-4 hidden"></div>
-
-  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
-    Không tìm thấy tài sản phù hợp
-  </div>
-
+  <div id="list"></div>
 </main>
+
+<!-- ================= IMAGE MODAL ================= -->
+<div id="imgModal"
+  class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center">
+
+  <div class="absolute top-4 left-4 text-white text-sm" id="imgCount"></div>
+
+  <button onclick="closeModal()"
+    class="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+
+  <img id="modalImg"
+    class="max-w-[95%] max-h-[90%] rounded-xl select-none">
+
+</div>
 
 <script>
 /* ================= CONFIG ================= */
@@ -65,168 +69,156 @@ const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GI
 const $ = id => document.getElementById(id);
 let DATA = [];
 
-/* ============ CLEAN GOOGLE JSON ============ */
-function cleanJSON(text) {
+/* ================= CLEAN JSON ================= */
+function cleanJSON(text){
   return JSON.parse(
-    text
-      .replace('/*O_o*/', '')
-      .replace('google.visualization.Query.setResponse(', '')
-      .slice(0, -2)
+    text.replace('/*O_o*/','')
+        .replace('google.visualization.Query.setResponse(','')
+        .slice(0,-2)
   );
 }
 
-/* ============ DRIVE LINK → MOBILE IMAGE ============ */
-function driveToImage(url) {
-  if (!url) return '';
-
-  let id = '';
-
-  // /file/d/FILE_ID/view
-  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) id = m[1];
-
-  // open?id=FILE_ID
-  if (!id) {
-    m = url.match(/id=([a-zA-Z0-9_-]+)/);
-    if (m) id = m[1];
-  }
-
-  if (!id) return '';
-
-  // ✅ CDN ảnh thật – desktop + mobile OK
-  return `https://lh3.googleusercontent.com/d/${id}=w1200`;
+/* ================= DRIVE → IMAGE ================= */
+function driveToImage(url){
+  if(!url) return '';
+  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if(!m) return '';
+  return `https://lh3.googleusercontent.com/d/${m[1]}=w1600`;
 }
 
-/* ================= LOAD DATA ================= */
-async function loadData() {
-  const res = await fetch(URL);
-  const text = await res.text();
-  const json = cleanJSON(text);
-
-  DATA = json.table.rows.map(r => {
-    const images = [
-      driveToImage(r.c?.[7]?.v),
-      driveToImage(r.c?.[8]?.v),
-      driveToImage(r.c?.[9]?.v)
-    ].filter(Boolean);
-
-    return {
-      owner: r.c?.[0]?.v || '',
-      phone: r.c?.[1]?.v || '',
-      address: r.c?.[2]?.v || '',
-      price: r.c?.[3]?.v || '',
-      deposit: r.c?.[4]?.v || '',
-      commission: r.c?.[5]?.v || '',
-      imageLink: r.c?.[6]?.v || '',
-      images
-    };
-  }).filter(i => i.address);
-
-  $('loading').classList.add('hidden');
-  $('search').disabled = false;
-  $('btn').disabled = false;
-
-  render(DATA);
-}
-
-/* ================= SEARCH ================= */
-function search() {
-  const k = $('search').value.toLowerCase().trim();
-  $('search').blur();
-  if (!k) return render(DATA);
-
-  render(
-    DATA.filter(i =>
-      [i.address, i.phone, i.price, i.deposit, i.commission]
-        .join(' ')
-        .toLowerCase()
-        .includes(k)
-    )
-  );
-}
-
-/* ================= COPY PHONE ================= */
-function copyPhone(btn, phone) {
-  navigator.clipboard.writeText(phone).then(() => {
-    const old = btn.innerHTML;
-    btn.innerHTML = '✓';
-    btn.classList.replace('bg-gray-200','bg-green-200');
-    setTimeout(() => {
-      btn.innerHTML = old;
-      btn.classList.replace('bg-green-200','bg-gray-200');
-    }, 1200);
+/* ================= LOAD ================= */
+fetch(URL)
+  .then(r=>r.text())
+  .then(t=>{
+    const j = cleanJSON(t);
+    DATA = j.table.rows.map(r=>{
+      const images = [
+        driveToImage(r.c?.[7]?.v),
+        driveToImage(r.c?.[8]?.v),
+        driveToImage(r.c?.[9]?.v)
+      ].filter(Boolean);
+      return {
+        address:r.c?.[2]?.v||'',
+        price:r.c?.[3]?.v||'',
+        phone:r.c?.[1]?.v||'',
+        images
+      };
+    }).filter(i=>i.address);
+    render();
   });
-}
 
 /* ================= RENDER ================= */
-function render(arr) {
-  const box = $('list');
-  box.innerHTML = '';
-  $('empty').classList.add('hidden');
+function render(){
+  $('list').innerHTML = DATA.map(i=>`
+    <div class="card bg-white p-4 shadow space-y-3 mb-4">
+      ${i.images.length?`
+      <div class="grid grid-cols-3 gap-2">
+        ${i.images.map((img,idx)=>`
+          <img src="${img}"
+            onclick='openModal(${JSON.stringify(i.images)},${idx})'
+            class="w-full h-32 object-cover rounded-xl cursor-pointer">
+        `).join('')}
+      </div>`:''}
 
-  if (!arr.length) {
-    box.classList.add('hidden');
-    $('empty').classList.remove('hidden');
-    return;
-  }
-
-  box.classList.remove('hidden');
-
-  box.innerHTML = arr.map(i => `
-    <div class="card bg-white p-4 shadow space-y-3">
-
-      ${i.images.length ? `
-        <div class="grid grid-cols-3 gap-2">
-          ${i.images.map(img => `
-            <a href="${img}" target="_blank">
-              <img src="${img}"
-                class="w-full h-32 object-cover rounded-xl border"
-                loading="lazy">
-            </a>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      <a href="${i.imageLink || '#'}" target="_blank"
-        class="block bg-indigo-50 border border-indigo-200 rounded-xl p-3">
-        <div class="text-xs uppercase text-indigo-500 mb-1">Địa chỉ</div>
-        <div class="font-bold text-indigo-800 line-2">📍 ${i.address}</div>
+      <div class="font-bold">📍 ${i.address}</div>
+      <div class="text-red-600 font-extrabold">💰 ${i.price}</div>
+      <a href="tel:${i.phone}"
+        class="block bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
+        📞 ${i.phone}
       </a>
-
-      <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200
-                  text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
-        💰 Giá thuê: ${i.price}
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
-        <span class="badge bg-green-100 text-green-700 font-semibold">
-          HH ${i.commission}
-        </span>
-      </div>
-
-      <div class="flex gap-2">
-        <a href="tel:${i.phone}"
-          class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
-          📞 GỌI NGAY (${i.phone})
-        </a>
-        <button onclick="copyPhone(this,'${i.phone}')"
-          class="bg-gray-200 px-3 rounded-xl text-sm font-semibold">
-          📋
-        </button>
-      </div>
-
-      <div class="text-sm text-gray-500">👤 ${i.owner}</div>
-
     </div>
   `).join('');
 }
 
-/* ================= EVENTS ================= */
-$('btn').onclick = search;
-$('search').addEventListener('keydown', e => e.key === 'Enter' && search());
+/* ================= MODAL LOGIC ================= */
+let modalImages=[], idx=0;
+let scale=1, startX=0, startY=0, dx=0, dy=0;
+let startDist=0;
 
-loadData();
+function openModal(images,i){
+  modalImages = images;
+  idx = i;
+  resetTransform();
+  updateImg();
+  $('imgModal').classList.remove('hidden');
+}
+
+function closeModal(){
+  $('imgModal').classList.add('hidden');
+}
+
+function updateImg(){
+  $('modalImg').src = modalImages[idx];
+  $('imgCount').innerText = `${idx+1}/${modalImages.length}`;
+}
+
+function resetTransform(){
+  scale=1; dx=0; dy=0;
+  applyTransform();
+}
+
+function applyTransform(){
+  $('modalImg').style.transform =
+    `translate(${dx}px,${dy}px) scale(${scale})`;
+}
+
+/* ===== TOUCH EVENTS ===== */
+let touches=[];
+
+$('imgModal').addEventListener('touchstart',e=>{
+  touches = [...e.touches];
+  if(touches.length===2){
+    startDist = getDist(touches);
+  }else{
+    startX = touches[0].clientX;
+    startY = touches[0].clientY;
+  }
+},{passive:false});
+
+$('imgModal').addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===2){
+    const dist = getDist(e.touches);
+    scale = Math.min(Math.max(1, scale * dist/startDist),3);
+    startDist = dist;
+  }else{
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    dx += x-startX;
+    dy += y-startY;
+    startX=x; startY=y;
+  }
+  applyTransform();
+},{passive:false});
+
+$('imgModal').addEventListener('touchend',e=>{
+  if(scale===1 && Math.abs(dx)>80){
+    idx = dx<0 ? (idx+1)%modalImages.length :
+                 (idx-1+modalImages.length)%modalImages.length;
+    resetTransform();
+    updateImg();
+  }
+});
+
+/* ===== DOUBLE TAP ZOOM ===== */
+let lastTap=0;
+$('imgModal').addEventListener('click',()=>{
+  const now = Date.now();
+  if(now-lastTap<300){
+    scale = scale>1 ? 1 : 2;
+    dx=dy=0;
+    applyTransform();
+  }
+  lastTap=now;
+});
+
+/* ===== UTILS ===== */
+function getDist(t){
+  return Math.hypot(
+    t[0].clientX - t[1].clientX,
+    t[0].clientY - t[1].clientY
+  );
+}
 </script>
 
 </body>
