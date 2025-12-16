@@ -60,10 +60,10 @@ const cleanJSON=t=>JSON.parse(t.replace('/*O_o*/','').replace('google.visualizat
 
 /* DRIVE → DIRECT IMAGE + fallback */
 function driveToImage(url){
-  if(!url) return '';
+  if(!url) return 'https://via.placeholder.com/300x200?text=No+Image';
   let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-  if(!m) return '';
-  return `https://drive.google.com/uc?export=view&id=${m[1]}`; // direct link
+  if(!m) return 'https://via.placeholder.com/300x200?text=No+Image';
+  return `https://drive.google.com/uc?export=view&id=${m[1]}`;
 }
 
 /* LOAD DATA */
