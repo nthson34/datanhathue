@@ -13,7 +13,7 @@ body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
 .card{border-radius:18px}
 .badge{font-size:12px;padding:4px 10px;border-radius:999px}
 .thumb{height:110px;border-radius:14px;background-size:cover;background-position:center;cursor:pointer}
-#imgModal{touch-action:none}
+#imgModal{touch-action:none;z-index:50}
 #modalImg{max-width:95vw;max-height:90vh;transform-origin:center;transition:transform .12s ease;user-select:none}
 </style>
 </head>
@@ -41,13 +41,14 @@ body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
   </div>
 </main>
 
-<div id="imgModal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center">
+<div id="imgModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center">
   <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
   <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
   <img id="modalImg">
 </div>
 
 <script>
+/* CONFIG */
 const SHEET_ID='14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID='61368668';
 const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')}`;
@@ -86,7 +87,7 @@ async function loadData(){
 /* SEARCH */
 function search(){
   const k=$('search').value.toLowerCase().trim();
-  $('search').blur(); // ẩn bàn phím
+  $('search').blur();
   DISPLAY_DATA = !k ? [...DATA] : DATA.filter(i=>[i.address,i.phone,i.price,i.deposit,i.commission].join(' ').toLowerCase().includes(k));
   render(DISPLAY_DATA);
 }
@@ -103,7 +104,7 @@ function render(arr){
     <div class="card bg-white p-4 shadow space-y-3">
       ${i.images.length?`<div class="grid grid-cols-3 gap-2">
         ${i.images.map((img,idx)=>`
-          <div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')"></div>
+          <div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>
         `).join('')}
       </div>`:''}
       <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
@@ -129,49 +130,61 @@ function render(arr){
 }
 
 /* ================= POPUP ================= */
-let modalImgs=[], modalIdx=0, scale=1, dx=0, dy=0, startX=0, startY=0, startDist=0;
+let modalImgs=[], modalIdx=0, scale=1, dx=0, dy=0;
+let swipeStartX=0, swipeStartY=0, startDist=0;
 const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
 
-document.addEventListener('click',e=>{
-  const t=e.target.closest('.thumb'); if(!t)return;
+document.addEventListener('click', e=>{
+  const t = e.target.closest('.thumb'); if(!t) return;
   const cardIdx = +t.dataset.card;
-  modalImgs = DISPLAY_DATA[cardIdx].images; // <-- dùng DISPLAY_DATA sau filter
+  modalImgs = DISPLAY_DATA[cardIdx].images;
   modalIdx = +t.dataset.idx;
-  dx=0; dy=0; scale=1; apply();
+  reset();
   openModal();
 });
 
 function openModal(){modalImg.src=modalImgs[modalIdx]; imgCount.innerText=`${modalIdx+1}/${modalImgs.length}`; imgModal.classList.remove('hidden');}
 function closeModal(){imgModal.classList.add('hidden');}
+function reset(){scale=1; dx=0; dy=0; swipeStartX=0; swipeStartY=0; apply();}
 function apply(){modalImg.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;}
 
-/* TOUCH */
-imgModal.addEventListener('touchstart',e=>{
-  if(e.touches.length===2) startDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-  else {startX=e.touches[0].clientX; startY=e.touches[0].clientY;}
+/* TOUCH EVENTS */
+imgModal.addEventListener('touchstart', e=>{
+  if(e.touches.length===1 && scale===1){swipeStartX = e.touches[0].clientX; swipeStartY=e.touches[0].clientY;}
+  else if(e.touches.length===2){
+    startDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+  }
 },{passive:false});
 
-imgModal.addEventListener('touchmove',e=>{
+imgModal.addEventListener('touchmove', e=>{
   e.preventDefault();
   if(e.touches.length===2){
-    let d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    scale=Math.min(Math.max(1,scale*d/startDist),3); startDist=d;
-  } else if(scale>1){dx+=e.touches[0].clientX-startX; dy+=e.touches[0].clientY-startY; startX=e.touches[0].clientX; startY=e.touches[0].clientY;}
-  apply();
+    let d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    scale=Math.min(Math.max(1, scale*d/startDist), 3); startDist=d;
+  } else if(e.touches.length===1 && scale>1){
+    dx += e.touches[0].clientX - swipeStartX;
+    dy += e.touches[0].clientY - swipeStartY;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    apply();
+  }
 },{passive:false});
 
-imgModal.addEventListener('touchend',()=>{
-  if(scale===1 && Math.abs(dx)>50){
-    modalIdx=dx<0?(modalIdx+1)%modalImgs.length:(modalIdx-1+modalImgs.length)%modalImgs.length;
-    dx=0; dy=0; scale=1; apply();
-    openModal();
+imgModal.addEventListener('touchend', e=>{
+  if(scale===1 && e.changedTouches.length===1){
+    const swipeEndX = e.changedTouches[0].clientX;
+    const diff = swipeEndX - swipeStartX;
+    if(Math.abs(diff) > 40){
+      modalIdx = diff<0 ? (modalIdx+1)%modalImgs.length : (modalIdx-1+modalImgs.length)%modalImgs.length;
+      reset(); openModal();
+    }
   }
-  dx=0; dy=0;
+  dx=0; dy=0; swipeStartX=0; swipeStartY=0;
 });
 
 /* EVENTS */
 $('btn').onclick=search;
-$('search').addEventListener('keydown',e=>{if(e.key==='Enter') search();});
+$('search').addEventListener('keydown', e=>{if(e.key==='Enter') search();});
 
 /* LOAD */
 loadData();
