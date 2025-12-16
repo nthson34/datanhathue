@@ -75,7 +75,7 @@ function cleanJSON(text) {
   );
 }
 
-/* ============ DRIVE LINK → IMAGE ============ */
+/* ============ DRIVE LINK → MOBILE IMAGE ============ */
 function driveToImage(url) {
   if (!url) return '';
 
@@ -91,16 +91,10 @@ function driveToImage(url) {
     if (m) id = m[1];
   }
 
-  // uc?id=FILE_ID
-  if (!id) {
-    m = url.match(/uc\?id=([a-zA-Z0-9_-]+)/);
-    if (m) id = m[1];
-  }
-
   if (!id) return '';
 
-  // dùng thumbnail để load ổn định
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+  // ✅ CDN ảnh thật – desktop + mobile OK
+  return `https://lh3.googleusercontent.com/d/${id}=w1200`;
 }
 
 /* ================= LOAD DATA ================= */
@@ -139,7 +133,6 @@ async function loadData() {
 function search() {
   const k = $('search').value.toLowerCase().trim();
   $('search').blur();
-
   if (!k) return render(DATA);
 
   render(
