@@ -2,29 +2,34 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DỮ LIỆU NHÀ THUÊ</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-body { background:#f1f5f9; }
-
-.thumb {
-  background-size: cover;
-  background-position: center;
-  border-radius: 14px;
-  height: 120px;
-  touch-action: manipulation;
+body{
+  background:#f1f5f9;
+  overscroll-behavior: none;
 }
 
-#imgModal {
-  touch-action: none;
+.thumb{
+  height:120px;
+  border-radius:14px;
+  background-size:cover;
+  background-position:center;
 }
 
-#modalImg {
-  transition: transform .15s ease;
-  transform-origin: center;
+#modal{
+  touch-action:none;
+}
+
+#modalImg{
+  max-width:95vw;
+  max-height:90vh;
+  transform-origin:center;
+  transition:transform .12s ease;
+  user-select:none;
 }
 </style>
 </head>
@@ -33,82 +38,77 @@ body { background:#f1f5f9; }
 
 <main id="list" class="max-w-3xl mx-auto p-3"></main>
 
-<!-- ================= POPUP ================= -->
-<div id="imgModal"
-  class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center">
-
-  <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
-
-  <button onclick="closeModal()"
-    class="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
-
-  <img id="modalImg"
-    class="max-w-[95%] max-h-[90%] rounded-xl select-none">
-
+<!-- POPUP -->
+<div id="modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center">
+  <div id="counter" class="absolute top-4 left-4 text-white text-sm"></div>
+  <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
+  <img id="modalImg">
 </div>
 
 <script>
 /* ================= DATA DEMO ================= */
-const DATA = [
-  {
-    address:"68 CMT8",
-    price:"6 triệu",
-    images:[
-      "https://lh3.googleusercontent.com/d/1tXGJZxZExample=w1600",
-      "https://lh3.googleusercontent.com/d/1tXGJZxZExample2=w1600"
-    ]
-  }
-];
+const DATA = [{
+  address:"68 CMT8",
+  price:"6 triệu",
+  images:[
+    "https://lh3.googleusercontent.com/d/1tXGJZxZExample=w1600",
+    "https://lh3.googleusercontent.com/d/1tXGJZxZExample2=w1600",
+    "https://lh3.googleusercontent.com/d/1tXGJZxZExample3=w1600"
+  ]
+}];
 
 /* ================= RENDER ================= */
-function render(){
-  list.innerHTML = DATA.map((i,ci)=>`
-    <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
-      <div class="grid grid-cols-3 gap-2">
-        ${i.images.map((img,idx)=>`
-          <div class="thumb"
-            data-card="${ci}"
-            data-idx="${idx}"
-            style="background-image:url('${img}')">
-          </div>
-        `).join('')}
-      </div>
-      <div class="font-bold">📍 ${i.address}</div>
-      <div class="text-red-600 font-extrabold">💰 ${i.price}</div>
+const list = document.getElementById('list');
+
+list.innerHTML = DATA.map((i,ci)=>`
+  <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
+    <div class="grid grid-cols-3 gap-2">
+      ${i.images.map((img,idx)=>`
+        <div class="thumb"
+          data-card="${ci}"
+          data-idx="${idx}"
+          style="background-image:url('${img}')">
+        </div>
+      `).join('')}
     </div>
-  `).join('');
-}
-render();
+    <div class="font-bold">📍 ${i.address}</div>
+    <div class="text-red-600 font-extrabold">💰 ${i.price}</div>
+  </div>
+`).join('');
 
 /* ================= POPUP LOGIC ================= */
-let modalImages=[], index=0;
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modalImg');
+const counter = document.getElementById('counter');
+
+let imgs=[], idx=0;
 let scale=1, dx=0, dy=0;
 let startX=0, startY=0, startDist=0;
 
-document.addEventListener('pointerdown',e=>{
+/* OPEN */
+list.addEventListener('click',e=>{
   const t = e.target.closest('.thumb');
   if(!t) return;
 
-  e.preventDefault();
-  e.stopPropagation();
-
-  modalImages = DATA[t.dataset.card].images;
-  index = +t.dataset.idx;
-
+  imgs = DATA[t.dataset.card].images;
+  idx = +t.dataset.idx;
   reset();
-  openModal();
+  show();
 });
 
-function openModal(){
-  modalImg.src = modalImages[index];
-  imgCount.innerText = `${index+1}/${modalImages.length}`;
-  imgModal.classList.remove('hidden');
+/* SHOW */
+function show(){
+  modalImg.src = imgs[idx];
+  counter.innerText = `${idx+1}/${imgs.length}`;
+  modal.classList.remove('hidden');
 }
 
+/* CLOSE */
 function closeModal(){
-  imgModal.classList.add('hidden');
+  modal.classList.add('hidden');
 }
 
+/* RESET */
 function reset(){
   scale=1; dx=0; dy=0;
   apply();
@@ -120,7 +120,8 @@ function apply(){
 }
 
 /* ================= TOUCH ================= */
-imgModal.addEventListener('touchstart',e=>{
+modal.addEventListener('touchstart',e=>{
+  e.preventDefault();
   if(e.touches.length===2){
     startDist = dist(e.touches);
   }else{
@@ -129,28 +130,28 @@ imgModal.addEventListener('touchstart',e=>{
   }
 },{passive:false});
 
-imgModal.addEventListener('touchmove',e=>{
+modal.addEventListener('touchmove',e=>{
   e.preventDefault();
   if(e.touches.length===2){
     let d = dist(e.touches);
     scale = Math.min(Math.max(1, scale*d/startDist),3);
-    startDist=d;
+    startDist = d;
   }else if(scale>1){
     dx += e.touches[0].clientX-startX;
     dy += e.touches[0].clientY-startY;
-    startX=e.touches[0].clientX;
-    startY=e.touches[0].clientY;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
   }
   apply();
 },{passive:false});
 
-imgModal.addEventListener('touchend',()=>{
+modal.addEventListener('touchend',()=>{
   if(scale===1 && Math.abs(dx)>80){
-    index = dx<0
-      ? (index+1)%modalImages.length
-      : (index-1+modalImages.length)%modalImages.length;
+    idx = dx<0
+      ? (idx+1)%imgs.length
+      : (idx-1+imgs.length)%imgs.length;
     reset();
-    openModal();
+    show();
   }
 });
 
