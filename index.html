@@ -12,8 +12,6 @@
 body { font-family: Inter, sans-serif; background:#f1f5f9; }
 .card { border-radius:18px; }
 .badge { font-size:12px; padding:4px 10px; border-radius:999px; }
-
-/* giới hạn địa chỉ 2 dòng */
 .line-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -25,30 +23,21 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 
 <body>
 
-<!-- HEADER -->
 <header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-10 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-2xl font-extrabold text-center tracking-wide">
-      DỮ LIỆU NHÀ THUÊ
-    </h1>
-
+    <h1 class="text-2xl font-extrabold text-center tracking-wide">DỮ LIỆU NHÀ THUÊ</h1>
     <div class="flex gap-2">
       <input id="search" type="text"
         placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
-        class="flex-1 p-3 rounded-xl text-gray-800 text-base"
-        inputmode="search"
+        class="flex-1 p-3 rounded-xl text-gray-800"
         disabled>
-
       <button id="btn"
         class="bg-white/20 px-4 rounded-xl font-semibold text-sm"
-        disabled>
-        Tìm
-      </button>
+        disabled>Tìm</button>
     </div>
   </div>
 </header>
 
-<!-- CONTENT -->
 <main class="max-w-3xl mx-auto p-3 space-y-4">
 
   <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
@@ -72,22 +61,21 @@ const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GI
   encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')
 }`;
 
-let DATA = [];
 const $ = id => document.getElementById(id);
+let DATA = [];
 
-/* CLEAN GOOGLE JSON */
+/* CLEAN JSON */
 const cleanJSON = t => JSON.parse(
   t.replace('/*O_o*/','')
    .replace('google.visualization.Query.setResponse(','')
    .slice(0,-2)
 );
 
-/* DRIVE LINK → IMAGE LINK */
+/* DRIVE → IMAGE */
 function driveToImage(url) {
   if (!url) return '';
   const m = url.match(/\/d\/([^/]+)\//);
-  if (!m) return '';
-  return `https://drive.google.com/uc?id=${m[1]}`;
+  return m ? `https://drive.google.com/uc?id=${m[1]}` : '';
 }
 
 /* LOAD DATA */
@@ -98,9 +86,9 @@ async function loadData() {
 
   DATA = json.table.rows.map(r => {
     const images = [
-      driveToImage(r.c?.[7]?.v || ''), // H
-      driveToImage(r.c?.[8]?.v || ''), // I
-      driveToImage(r.c?.[9]?.v || '')  // J
+      driveToImage(r.c?.[7]?.v),
+      driveToImage(r.c?.[8]?.v),
+      driveToImage(r.c?.[9]?.v)
     ].filter(Boolean);
 
     return {
@@ -166,23 +154,27 @@ function render(arr) {
     <div class="card bg-white p-4 shadow space-y-3">
 
       ${i.images.length ? `
-        <div class="grid grid-cols-${Math.min(i.images.length,3)} gap-2">
-          ${i.images.map(img => `
-            <a href="${img}" target="_blank">
-              <img src="${img}"
-                class="w-full h-32 object-cover rounded-xl border"
-                loading="lazy">
-            </a>
-          `).join('')}
+        <div class="grid grid-cols-3 gap-2">
+          ${i.images.map((img, idx) => {
+            let span = 'col-span-3';
+            if (i.images.length === 2) span = 'col-span-3 md:col-span-1';
+            if (i.images.length === 3) span = 'col-span-1';
+
+            return `
+              <a href="${img}" target="_blank" class="${span}">
+                <img src="${img}"
+                  class="w-full h-32 object-cover rounded-xl border"
+                  loading="lazy">
+              </a>
+            `;
+          }).join('')}
         </div>
       ` : ''}
 
       <a href="${i.imageLink || '#'}" target="_blank"
         class="block bg-indigo-50 border border-indigo-200 rounded-xl p-3">
         <div class="text-xs uppercase text-indigo-500 mb-1">Địa chỉ</div>
-        <div class="font-bold text-indigo-800 text-base line-2">
-          📍 ${i.address}
-        </div>
+        <div class="font-bold text-indigo-800 line-2">📍 ${i.address}</div>
       </a>
 
       <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200
@@ -202,16 +194,13 @@ function render(arr) {
           class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
           📞 GỌI NGAY (${i.phone})
         </a>
-
         <button onclick="copyPhone(this,'${i.phone}')"
           class="bg-gray-200 px-3 rounded-xl text-sm font-semibold">
           📋
         </button>
       </div>
 
-      <div class="flex justify-between items-center text-sm text-gray-500">
-        <span>👤 ${i.owner}</span>
-      </div>
+      <div class="text-sm text-gray-500">👤 ${i.owner}</div>
 
     </div>
   `).join('');
