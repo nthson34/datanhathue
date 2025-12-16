@@ -57,7 +57,14 @@ let DATA=[], DISPLAY_DATA=[];
 
 /* CLEAN JSON */
 const cleanJSON=t=>JSON.parse(t.replace('/*O_o*/','').replace('google.visualization.Query.setResponse(','').slice(0,-2));
-function driveToImage(url){if(!url)return'';let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);return m?`https://lh3.googleusercontent.com/d/${m[1]}=w800`:''}
+
+/* DRIVE → DIRECT IMAGE + fallback */
+function driveToImage(url){
+  if(!url) return '';
+  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if(!m) return '';
+  return `https://drive.google.com/uc?export=view&id=${m[1]}`; // direct link
+}
 
 /* LOAD DATA */
 async function loadData(){
@@ -150,7 +157,7 @@ function apply(){modalImg.style.transform=`translate(${dx}px,${dy}px) scale(${sc
 
 /* TOUCH EVENTS */
 imgModal.addEventListener('touchstart', e=>{
-  if(e.touches.length===1 && scale===1){swipeStartX = e.touches[0].clientX; swipeStartY=e.touches[0].clientY;}
+  if(e.touches.length===1 && scale===1){swipeStartX=e.touches[0].clientX; swipeStartY=e.touches[0].clientY;}
   else if(e.touches.length===2){
     startDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
   }
