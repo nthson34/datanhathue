@@ -68,31 +68,52 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
 /* CONFIG */
 const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID = '61368668';
-const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G')}`;
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${
+  encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')
+}`;
 
 let DATA = [];
 const $ = id => document.getElementById(id);
 
+/* CLEAN GOOGLE JSON */
 const cleanJSON = t => JSON.parse(
   t.replace('/*O_o*/','')
    .replace('google.visualization.Query.setResponse(','')
    .slice(0,-2)
 );
 
+/* DRIVE LINK → IMAGE LINK */
+function driveToImage(url) {
+  if (!url) return '';
+  const m = url.match(/\/d\/([^/]+)\//);
+  if (!m) return '';
+  return `https://drive.google.com/uc?id=${m[1]}`;
+}
+
+/* LOAD DATA */
 async function loadData() {
   const res = await fetch(URL);
   const txt = await res.text();
   const json = cleanJSON(txt);
 
-  DATA = json.table.rows.map(r => ({
-    owner: r.c?.[0]?.v || '',
-    phone: r.c?.[1]?.v || '',
-    address: r.c?.[2]?.v || '',
-    price: r.c?.[3]?.v || '',
-    deposit: r.c?.[4]?.v || '',
-    commission: r.c?.[5]?.v || '',
-    image: r.c?.[6]?.v || ''
-  })).filter(i => i.address);
+  DATA = json.table.rows.map(r => {
+    const images = [
+      driveToImage(r.c?.[7]?.v || ''), // H
+      driveToImage(r.c?.[8]?.v || ''), // I
+      driveToImage(r.c?.[9]?.v || '')  // J
+    ].filter(Boolean);
+
+    return {
+      owner: r.c?.[0]?.v || '',
+      phone: r.c?.[1]?.v || '',
+      address: r.c?.[2]?.v || '',
+      price: r.c?.[3]?.v || '',
+      deposit: r.c?.[4]?.v || '',
+      commission: r.c?.[5]?.v || '',
+      imageLink: r.c?.[6]?.v || '',
+      images
+    };
+  }).filter(i => i.address);
 
   $('loading').classList.add('hidden');
   $('search').disabled = false;
@@ -102,10 +123,8 @@ async function loadData() {
 
 /* SEARCH */
 function search() {
-  const input = $('search');
-  const k = input.value.toLowerCase().trim();
-  input.blur();
-
+  const k = $('search').value.toLowerCase().trim();
+  $('search').blur();
   if (!k) return render(DATA);
 
   render(DATA.filter(i =>
@@ -116,19 +135,16 @@ function search() {
   ));
 }
 
-/* COPY PHONE WITH FEEDBACK */
+/* COPY PHONE */
 function copyPhone(btn, phone) {
   navigator.clipboard.writeText(phone).then(() => {
     const old = btn.innerHTML;
-    btn.innerHTML = '✓ Đã copy';
-    btn.classList.remove('bg-gray-200');
-    btn.classList.add('bg-green-200','text-green-800');
-
+    btn.innerHTML = '✓';
+    btn.classList.replace('bg-gray-200','bg-green-200');
     setTimeout(() => {
       btn.innerHTML = old;
-      btn.classList.remove('bg-green-200','text-green-800');
-      btn.classList.add('bg-gray-200');
-    }, 1500);
+      btn.classList.replace('bg-green-200','bg-gray-200');
+    }, 1200);
   });
 }
 
@@ -149,8 +165,19 @@ function render(arr) {
   box.innerHTML = arr.map(i => `
     <div class="card bg-white p-4 shadow space-y-3">
 
-      <!-- ADDRESS BLOCK -->
-      <a href="${i.image || '#'}" target="_blank"
+      ${i.images.length ? `
+        <div class="grid grid-cols-${Math.min(i.images.length,3)} gap-2">
+          ${i.images.map(img => `
+            <a href="${img}" target="_blank">
+              <img src="${img}"
+                class="w-full h-32 object-cover rounded-xl border"
+                loading="lazy">
+            </a>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <a href="${i.imageLink || '#'}" target="_blank"
         class="block bg-indigo-50 border border-indigo-200 rounded-xl p-3">
         <div class="text-xs uppercase text-indigo-500 mb-1">Địa chỉ</div>
         <div class="font-bold text-indigo-800 text-base line-2">
@@ -158,13 +185,11 @@ function render(arr) {
         </div>
       </a>
 
-      <!-- PRICE BLOCK -->
       <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200
                   text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
         💰 Giá thuê: ${i.price}
       </div>
 
-      <!-- SUB INFO -->
       <div class="flex flex-wrap gap-2">
         <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
         <span class="badge bg-green-100 text-green-700 font-semibold">
@@ -172,7 +197,6 @@ function render(arr) {
         </span>
       </div>
 
-      <!-- ACTION -->
       <div class="flex gap-2">
         <a href="tel:${i.phone}"
           class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
@@ -185,11 +209,8 @@ function render(arr) {
         </button>
       </div>
 
-      <!-- FOOTER -->
       <div class="flex justify-between items-center text-sm text-gray-500">
         <span>👤 ${i.owner}</span>
-        ${i.image ? `<a href="${i.image}" target="_blank"
-          class="text-blue-600 font-semibold">📷 Xem hình</a>` : ''}
       </div>
 
     </div>
