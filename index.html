@@ -1,31 +1,37 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DỮ LIỆU NHÀ THUÊ</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-body { font-family: Inter, sans-serif; background:#f1f5f9; }
-.card { border-radius:18px; }
-.badge { font-size:12px; padding:4px 10px; border-radius:999px; }
+body { background:#f1f5f9; }
+
+.thumb {
+  background-size: cover;
+  background-position: center;
+  border-radius: 14px;
+  height: 120px;
+  touch-action: manipulation;
+}
 
 #imgModal {
   touch-action: none;
 }
+
 #modalImg {
   transition: transform .15s ease;
-  transform-origin: center center;
+  transform-origin: center;
 }
 </style>
 </head>
 
 <body>
 
-<main class="max-w-3xl mx-auto p-3" id="list"></main>
+<main id="list" class="max-w-3xl mx-auto p-3"></main>
 
 <!-- ================= POPUP ================= -->
 <div id="imgModal"
@@ -37,160 +43,122 @@ body { font-family: Inter, sans-serif; background:#f1f5f9; }
     class="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
 
   <img id="modalImg"
-    class="max-w-[95%] max-h-[90%] rounded-xl select-none pointer-events-none">
+    class="max-w-[95%] max-h-[90%] rounded-xl select-none">
 
 </div>
 
 <script>
-/* ================= CONFIG ================= */
-const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
-const GID = '61368668';
-
-const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${
-  encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')
-}`;
-
-const $ = id => document.getElementById(id);
-let DATA = [];
-
-/* ================= UTILS ================= */
-function cleanJSON(t){
-  return JSON.parse(
-    t.replace('/*O_o*/','')
-     .replace('google.visualization.Query.setResponse(','')
-     .slice(0,-2)
-  );
-}
-
-function driveToImage(url){
-  if(!url) return '';
-  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-  return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1600` : '';
-}
-
-/* ================= LOAD ================= */
-fetch(URL)
-  .then(r=>r.text())
-  .then(t=>{
-    const j = cleanJSON(t);
-    DATA = j.table.rows.map(r=>{
-      const images = [
-        driveToImage(r.c?.[7]?.v),
-        driveToImage(r.c?.[8]?.v),
-        driveToImage(r.c?.[9]?.v)
-      ].filter(Boolean);
-      return {
-        address:r.c?.[2]?.v||'',
-        price:r.c?.[3]?.v||'',
-        phone:r.c?.[1]?.v||'',
-        images
-      };
-    }).filter(i=>i.address);
-    render();
-  });
+/* ================= DATA DEMO ================= */
+const DATA = [
+  {
+    address:"68 CMT8",
+    price:"6 triệu",
+    images:[
+      "https://lh3.googleusercontent.com/d/1tXGJZxZExample=w1600",
+      "https://lh3.googleusercontent.com/d/1tXGJZxZExample2=w1600"
+    ]
+  }
+];
 
 /* ================= RENDER ================= */
 function render(){
-  $('list').innerHTML = DATA.map((i,cardIdx)=>`
-    <div class="card bg-white p-4 shadow mb-4 space-y-3">
+  list.innerHTML = DATA.map((i,ci)=>`
+    <div class="bg-white p-4 rounded-xl shadow mb-4 space-y-3">
       <div class="grid grid-cols-3 gap-2">
         ${i.images.map((img,idx)=>`
-          <img src="${img}"
-            data-card="${cardIdx}"
+          <div class="thumb"
+            data-card="${ci}"
             data-idx="${idx}"
-            class="w-full h-32 object-cover rounded-xl cursor-pointer img-thumb"
-            draggable="false">
+            style="background-image:url('${img}')">
+          </div>
         `).join('')}
       </div>
       <div class="font-bold">📍 ${i.address}</div>
       <div class="text-red-600 font-extrabold">💰 ${i.price}</div>
-      <a href="tel:${i.phone}"
-        class="block bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
-        📞 ${i.phone}
-      </a>
     </div>
   `).join('');
 }
+render();
 
-/* ================= MODAL ================= */
-let modalImages=[], idx=0;
+/* ================= POPUP LOGIC ================= */
+let modalImages=[], index=0;
 let scale=1, dx=0, dy=0;
 let startX=0, startY=0, startDist=0;
 
-document.addEventListener('click',e=>{
-  const img = e.target.closest('.img-thumb');
-  if(!img) return;
+document.addEventListener('pointerdown',e=>{
+  const t = e.target.closest('.thumb');
+  if(!t) return;
 
   e.preventDefault();
   e.stopPropagation();
 
-  const card = DATA[img.dataset.card];
-  modalImages = card.images;
-  idx = +img.dataset.idx;
+  modalImages = DATA[t.dataset.card].images;
+  index = +t.dataset.idx;
 
-  resetTransform();
-  updateImg();
-  $('imgModal').classList.remove('hidden');
+  reset();
+  openModal();
 });
 
+function openModal(){
+  modalImg.src = modalImages[index];
+  imgCount.innerText = `${index+1}/${modalImages.length}`;
+  imgModal.classList.remove('hidden');
+}
+
 function closeModal(){
-  $('imgModal').classList.add('hidden');
+  imgModal.classList.add('hidden');
 }
 
-function updateImg(){
-  $('modalImg').src = modalImages[idx];
-  $('imgCount').innerText = `${idx+1}/${modalImages.length}`;
-}
-
-function resetTransform(){
+function reset(){
   scale=1; dx=0; dy=0;
-  applyTransform();
+  apply();
 }
 
-function applyTransform(){
-  $('modalImg').style.transform =
+function apply(){
+  modalImg.style.transform =
     `translate(${dx}px,${dy}px) scale(${scale})`;
 }
 
 /* ================= TOUCH ================= */
-$('imgModal').addEventListener('touchstart',e=>{
+imgModal.addEventListener('touchstart',e=>{
   if(e.touches.length===2){
-    startDist = getDist(e.touches);
+    startDist = dist(e.touches);
   }else{
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
   }
 },{passive:false});
 
-$('imgModal').addEventListener('touchmove',e=>{
+imgModal.addEventListener('touchmove',e=>{
   e.preventDefault();
   if(e.touches.length===2){
-    const dist = getDist(e.touches);
-    scale = Math.min(Math.max(1, scale * dist/startDist),3);
-    startDist = dist;
+    let d = dist(e.touches);
+    scale = Math.min(Math.max(1, scale*d/startDist),3);
+    startDist=d;
   }else if(scale>1){
     dx += e.touches[0].clientX-startX;
     dy += e.touches[0].clientY-startY;
     startX=e.touches[0].clientX;
     startY=e.touches[0].clientY;
   }
-  applyTransform();
+  apply();
 },{passive:false});
 
-$('imgModal').addEventListener('touchend',()=>{
+imgModal.addEventListener('touchend',()=>{
   if(scale===1 && Math.abs(dx)>80){
-    idx = dx<0 ? (idx+1)%modalImages.length :
-                 (idx-1+modalImages.length)%modalImages.length;
-    resetTransform();
-    updateImg();
+    index = dx<0
+      ? (index+1)%modalImages.length
+      : (index-1+modalImages.length)%modalImages.length;
+    reset();
+    openModal();
   }
 });
 
-/* ================= HELPERS ================= */
-function getDist(t){
+/* ================= UTIL ================= */
+function dist(t){
   return Math.hypot(
-    t[0].clientX - t[1].clientX,
-    t[0].clientY - t[1].clientY
+    t[0].clientX-t[1].clientX,
+    t[0].clientY-t[1].clientY
   );
 }
 </script>
