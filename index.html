@@ -13,18 +13,19 @@ body{font-family:Inter,sans-serif;background:#f1f5f9}
 .card{border-radius:18px}
 .badge{font-size:12px;padding:4px 10px;border-radius:999px}
 .thumb{
-  height:110px;
-  border-radius:14px;
-  background:#e5e7eb center/cover no-repeat;
-  cursor:pointer
+    height:110px;
+    border-radius:14px;
+    /* Sử dụng background-size: cover để hình ảnh trông đẹp hơn khi load */
+    background:#e5e7eb center/cover no-repeat;
+    cursor:pointer
 }
 #imgModal{touch-action:none;z-index:50}
 #modalImg{
-  max-width:95vw;
-  max-height:90vh;
-  transform-origin:center;
-  transition:transform .12s ease;
-  user-select:none
+    max-width:95vw;
+    max-height:90vh;
+    transform-origin:center;
+    transition:transform .12s ease;
+    user-select:none
 }
 </style>
 </head>
@@ -32,36 +33,35 @@ body{font-family:Inter,sans-serif;background:#f1f5f9}
 <body>
 
 <header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-20 shadow">
-  <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-2xl font-extrabold text-center">DỮ LIỆU NHÀ THUÊ</h1>
-    <div class="flex gap-2">
-      <input id="search" placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
-        class="flex-1 p-3 rounded-xl text-gray-800" disabled>
-      <button id="btn" class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>
-        Tìm
-      </button>
+    <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
+        <h1 class="text-2xl font-extrabold text-center">DỮ LIỆU NHÀ THUÊ</h1>
+        <div class="flex gap-2">
+            <input id="search" placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng"
+                class="flex-1 p-3 rounded-xl text-gray-800" disabled>
+            <button id="btn" class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>
+                Tìm
+            </button>
+        </div>
     </div>
-  </div>
 </header>
 
 <main class="max-w-3xl mx-auto p-3 space-y-4">
-  <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
-    <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
-    <p class="text-sm">Đang tải dữ liệu...</p>
-  </div>
+    <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
+        <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
+        <p class="text-sm">Đang tải dữ liệu...</p>
+    </div>
 
-  <div id="list" class="space-y-4 hidden"></div>
+    <div id="list" class="space-y-4 hidden"></div>
 
-  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
-    Không tìm thấy tài sản phù hợp
-  </div>
+    <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
+        Không tìm thấy tài sản phù hợp
+    </div>
 </main>
 
-<!-- IMAGE MODAL -->
 <div id="imgModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center">
-  <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
-  <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
-  <img id="modalImg">
+    <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
+    <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
+    <img id="modalImg">
 </div>
 
 <script>
@@ -69,137 +69,160 @@ body{font-family:Inter,sans-serif;background:#f1f5f9}
 const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID = '61368668';
 const QUERY = 'select A,B,C,D,E,F,G,H,I,J';
+// Thêm timestamp để tránh cache khi fetch data
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent(QUERY)}&_=${Date.now()}`;
 
 const $ = id => document.getElementById(id);
 let DATA = [], VIEW = [];
 
-/* ================= UTIL ================= */
+/* ================= UTIL (ĐÃ SỬA HÀM driveToImage) ================= */
 function cleanJSON(t){
-  return JSON.parse(
-    t.replace('/*O_o*/','')
-     .replace('google.visualization.Query.setResponse(','')
-     .slice(0,-2)
-  );
+    return JSON.parse(
+        t.replace('/*O_o*/','')
+         .replace('google.visualization.Query.setResponse(','')
+         .slice(0,-2)
+    );
 }
 
 function driveToImage(url){
-  if(!url) return '';
-  const s = url.toString().trim();
-  const m =
-    s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
-    s.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-    s.match(/id=([a-zA-Z0-9_-]+)/) ||
-    s.match(/^([a-zA-Z0-9_-]{20,})$/);
+    if(!url) return '';
+    const s = url.toString().trim();
 
-  return m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : '';
+    // Regex để trích xuất FILE_ID từ các dạng URL Google Drive phổ biến
+    let fileId = '';
+    const match = s.match(
+        /(?:file\/d\/|d\/|id=)([a-zA-Z0-9_-]{20,})/
+    );
+    
+    if (match) {
+        fileId = match[1];
+    } else if (s.length > 20 && s.match(/^[a-zA-Z0-9_-]+$/)) {
+        // Kiểm tra nếu chuỗi chỉ là ID tệp trực tiếp
+        fileId = s;
+    }
+
+    if (!fileId) return '';
+
+    // Trả về URL dạng 'uc?export=view' - Cần đảm bảo tệp được chia sẻ công khai!
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
 }
 
 /* ================= LOAD DATA ================= */
 async function loadData(){
-  const res = await fetch(URL);
-  const txt = await res.text();
-  const json = cleanJSON(txt);
+    try {
+        const res = await fetch(URL);
+        const txt = await res.text();
+        const json = cleanJSON(txt);
 
-  DATA = json.table.rows.map(r=>({
-    owner: r.c?.[0]?.v || '',
-    phone: r.c?.[1]?.v || '',
-    address: r.c?.[2]?.v || '',
-    price: r.c?.[3]?.v || '',
-    deposit: r.c?.[4]?.v || '',
-    commission: r.c?.[5]?.v || '',
-    imageLink: r.c?.[6]?.v || '',
-    images: [
-      driveToImage(r.c?.[7]?.v),
-      driveToImage(r.c?.[8]?.v),
-      driveToImage(r.c?.[9]?.v)
-    ].filter(Boolean)
-  })).filter(i=>i.address);
+        DATA = json.table.rows.map(r=>({
+            owner: r.c?.[0]?.v || '',
+            phone: r.c?.[1]?.v || '',
+            address: r.c?.[2]?.v || '',
+            price: r.c?.[3]?.v || '',
+            deposit: r.c?.[4]?.v || '',
+            commission: r.c?.[5]?.v || '',
+            // r.c?.[6]?.v là link ảnh chính (nếu có)
+            images: [
+                driveToImage(r.c?.[7]?.v), // Cột H
+                driveToImage(r.c?.[8]?.v), // Cột I
+                driveToImage(r.c?.[9]?.v)  // Cột J
+            ].filter(Boolean)
+        })).filter(i=>i.address); // Chỉ lấy các dòng có địa chỉ
 
-  VIEW = [...DATA];
-  $('loading').classList.add('hidden');
-  $('search').disabled = false;
-  $('btn').disabled = false;
+        VIEW = [...DATA];
+        $('loading').classList.add('hidden');
+        $('search').disabled = false;
+        $('btn').disabled = false;
 
-  renderText(VIEW);
-  requestIdleCallback(loadImages);
+        renderText(VIEW);
+        // Sử dụng requestIdleCallback để ưu tiên hiển thị text trước
+        requestIdleCallback(loadImages); 
+    } catch(error) {
+        console.error("Lỗi khi tải hoặc xử lý dữ liệu:", error);
+        $('loading').innerHTML = '<p class="text-red-600">Lỗi: Không thể tải dữ liệu. Vui lòng kiểm tra lại liên kết Google Sheet và quyền truy cập.</p>';
+        $('search').disabled = true;
+        $('btn').disabled = true;
+    }
 }
 
 /* ================= RENDER TEXT ================= */
 function renderText(arr){
-  const box = $('list');
-  box.innerHTML = '';
-  $('empty').classList.add('hidden');
+    const box = $('list');
+    box.innerHTML = '';
+    $('empty').classList.add('hidden');
 
-  if(!arr.length){
-    box.classList.add('hidden');
-    $('empty').classList.remove('hidden');
-    return;
-  }
+    if(!arr.length){
+        box.classList.add('hidden');
+        $('empty').classList.remove('hidden');
+        return;
+    }
 
-  box.classList.remove('hidden');
-  box.innerHTML = arr.map(i=>`
-    <div class="card bg-white p-4 shadow space-y-3"
-         data-images='${JSON.stringify(i.images)}'>
+    box.classList.remove('hidden');
+    box.innerHTML = arr.map(i=>`
+        <div class="card bg-white p-4 shadow space-y-3"
+            data-images='${JSON.stringify(i.images)}'>
 
-      <div class="grid grid-cols-3 gap-2 imgs"></div>
+            <div class="grid grid-cols-3 gap-2 imgs"></div>
 
-      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
-        <div class="text-xs text-indigo-500">ĐỊA CHỈ</div>
-        <div class="font-bold text-indigo-800">${i.address}</div>
-      </div>
+            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+                <div class="text-xs text-indigo-500">ĐỊA CHỈ</div>
+                <div class="font-bold text-indigo-800">${i.address}</div>
+            </div>
 
-      <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
-        💰 ${i.price}
-      </div>
+            <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
+                💰 ${i.price}
+            </div>
 
-      <div class="flex gap-2">
-        <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
-        <span class="badge bg-green-100 text-green-700">HH ${i.commission}</span>
-      </div>
+            <div class="flex gap-2">
+                <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
+                <span class="badge bg-green-100 text-green-700">HH ${i.commission}</span>
+            </div>
 
-      <a href="tel:${i.phone}" class="block bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
-        📞 ${i.phone}
-      </a>
+            <a href="tel:${i.phone}" class="block bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
+                📞 ${i.phone}
+            </a>
 
-      <div class="text-sm text-gray-500">👤 ${i.owner}</div>
-    </div>
-  `).join('');
+            <div class="text-sm text-gray-500">👤 ${i.owner}</div>
+        </div>
+    `).join('');
 }
 
 /* ================= LAZY LOAD IMAGES ================= */
 function loadImages(){
-  document.querySelectorAll('.card[data-images]').forEach(card=>{
-    const imgs = JSON.parse(card.dataset.images || '[]');
-    if(!imgs.length) return;
+    document.querySelectorAll('.card[data-images]').forEach(card=>{
+        const imgs = JSON.parse(card.dataset.images || '[]');
+        if(!imgs.length) return;
 
-    const box = card.querySelector('.imgs');
-    box.innerHTML = imgs.map(src=>`
-      <div class="thumb" data-src="${src}"></div>
-    `).join('');
-  });
-
-  const io = new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        e.target.style.backgroundImage = `url('${e.target.dataset.src}')`;
-        io.unobserve(e.target);
-      }
+        const box = card.querySelector('.imgs');
+        box.innerHTML = imgs.map(src=>`
+            <div class="thumb" data-src="${src}"></div>
+        `).join('');
     });
-  },{rootMargin:'150px'});
 
-  document.querySelectorAll('.thumb').forEach(t=>io.observe(t));
+    // Observer để tải ảnh khi cuộn đến
+    const io = new IntersectionObserver(entries=>{
+        entries.forEach(e=>{
+            if(e.isIntersecting){
+                // Lấy URL từ data-src và set làm background image
+                e.target.style.backgroundImage = `url('${e.target.dataset.src}')`;
+                io.unobserve(e.target);
+            }
+        });
+    },{rootMargin:'150px'}); // Tải trước khi vào màn hình 150px
+
+    document.querySelectorAll('.thumb').forEach(t=>io.observe(t));
 }
 
 /* ================= SEARCH ================= */
 function search(){
-  const k = $('search').value.toLowerCase().trim();
-  VIEW = !k ? [...DATA] : DATA.filter(i =>
-    [i.address,i.phone,i.price,i.deposit,i.commission]
-      .join(' ').toLowerCase().includes(k)
-  );
-  renderText(VIEW);
-  requestIdleCallback(loadImages);
+    const k = $('search').value.toLowerCase().trim();
+    VIEW = !k ? [...DATA] : DATA.filter(i =>
+        // Tìm kiếm trên các trường Địa chỉ, SĐT, Giá, Cọc, Hoa hồng
+        [i.address,i.phone,i.price,i.deposit,i.commission]
+          .join(' ').toLowerCase().includes(k)
+    );
+    renderText(VIEW);
+    requestIdleCallback(loadImages);
 }
 
 /* ================= IMAGE MODAL ================= */
@@ -207,26 +230,27 @@ let modalImgs=[], modalIdx=0;
 const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
 
 document.addEventListener('click', e=>{
-  const t = e.target.closest('.thumb');
-  if(!t) return;
+    const t = e.target.closest('.thumb');
+    if(!t) return;
 
-  const card = t.closest('.card');
-  modalImgs = JSON.parse(card.dataset.images || '[]');
-  modalIdx = [...t.parentNode.children].indexOf(t);
+    const card = t.closest('.card');
+    modalImgs = JSON.parse(card.dataset.images || '[]');
+    // Tính toán index của ảnh được click
+    modalIdx = [...t.parentNode.children].indexOf(t);
 
-  modalImg.src = modalImgs[modalIdx];
-  imgCount.textContent = `${modalIdx+1}/${modalImgs.length}`;
-  imgModal.classList.remove('hidden');
+    modalImg.src = modalImgs[modalIdx];
+    imgCount.textContent = `${modalIdx+1}/${modalImgs.length}`;
+    imgModal.classList.remove('hidden');
 });
 
 function closeModal(){
-  imgModal.classList.add('hidden');
+    imgModal.classList.add('hidden');
 }
 
 /* ================= EVENTS ================= */
 $('btn').onclick = search;
 $('search').addEventListener('keydown', e=>{
-  if(e.key === 'Enter') search();
+    if(e.key === 'Enter') search();
 });
 
 /* ================= INIT ================= */
