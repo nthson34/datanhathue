@@ -51,37 +51,42 @@ body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
 /* CONFIG */
 const SHEET_ID='14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID='61368668';
-const URL=https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')};
+const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')}`;
 const $=id=>document.getElementById(id);
 let DATA=[], DISPLAY_DATA=[];
 
 /* CLEAN JSON */
 const cleanJSON=t=>JSON.parse(t.replace('/*O_o*/','').replace('google.visualization.Query.setResponse(','').slice(0,-2));
-function driveToImage(url){if(!url)return'';let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);return m?https://lh3.googleusercontent.com/d/${m[1]}=w800:''}
+function driveToImage(url){if(!url)return '';let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);return m?`https://lh3.googleusercontent.com/d/${m[1]}=w800`:''}
 
 /* LOAD DATA */
 async function loadData(){
-  const res=await fetch(URL);
-  const txt=await res.text();
-  const json=cleanJSON(txt);
-  DATA=json.table.rows.map(r=>{
-    const images=[driveToImage(r.c?.[7]?.v),driveToImage(r.c?.[8]?.v),driveToImage(r.c?.[9]?.v)].filter(Boolean);
-    return{
-      owner:r.c?.[0]?.v||'',
-      phone:r.c?.[1]?.v||'',
-      address:r.c?.[2]?.v||'',
-      price:r.c?.[3]?.v||'',
-      deposit:r.c?.[4]?.v||'',
-      commission:r.c?.[5]?.v||'',
-      imageLink:r.c?.[6]?.v||'',
-      images
-    };
-  }).filter(i=>i.address);
-  DISPLAY_DATA = [...DATA];
-  $('loading').classList.add('hidden');
-  $('search').disabled=false;
-  $('btn').disabled=false;
-  render(DISPLAY_DATA);
+  try {
+    const res=await fetch(URL);
+    const txt=await res.text();
+    const json=cleanJSON(txt);
+    DATA=json.table.rows.map(r=>{
+      const images=[driveToImage(r.c?.[7]?.v),driveToImage(r.c?.[8]?.v),driveToImage(r.c?.[9]?.v)].filter(Boolean);
+      return{
+        owner:r.c?.[0]?.v||'',
+        phone:r.c?.[1]?.v||'',
+        address:r.c?.[2]?.v||'',
+        price:r.c?.[3]?.v||'',
+        deposit:r.c?.[4]?.v||'',
+        commission:r.c?.[5]?.v||'',
+        imageLink:r.c?.[6]?.v||'',
+        images
+      };
+    }).filter(i=>i.address);
+    DISPLAY_DATA = [...DATA];
+    $('loading').classList.add('hidden');
+    $('search').disabled=false;
+    $('btn').disabled=false;
+    render(DISPLAY_DATA);
+  } catch (err) {
+    console.error(err);
+    document.querySelector('#loading p').innerText = 'Lỗi tải dữ liệu. Hãy kiểm tra kết nối hoặc quyền truy cập file.';
+  }
 }
 
 /* SEARCH */
@@ -108,9 +113,11 @@ function render(arr){
   }
 
   box.classList.remove('hidden');
-  box.innerHTML=arr.map((i,ci)=>    <div class="card bg-white p-4 shadow space-y-3">
-      ${i.images.length?<div class="grid grid-cols-3 gap-2">        ${i.images.map((img,idx)=>          <div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>
-        ).join('')}      </div>:''}
+  box.innerHTML=arr.map((i,ci)=> `
+    <div class="card bg-white p-4 shadow space-y-3">
+      ${i.images.length?`<div class="grid grid-cols-3 gap-2">
+        ${i.images.map((img,idx)=> `<div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>`).join('')}
+      </div>`:''}
       <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
         <div class="text-xs uppercase text-indigo-500">Địa chỉ</div>
         <div class="font-bold text-indigo-800">
@@ -134,11 +141,13 @@ function render(arr){
         <button onclick="copyPhone(this,'${i.phone}')" class="bg-gray-200 px-3 rounded-xl">📋</button>
       </div>
 
-      ${i.images.length>1?<div class="text-right">        <a href="${i.imageLink||'#'}" target="_blank" class="text-sm text-blue-600 hover:underline font-semibold">Xem thêm ảnh</a>
-      </div>:''}
+      ${i.images.length>1?`<div class="text-right">
+        <a href="${i.imageLink||'#'}" target="_blank" class="text-sm text-blue-600 hover:underline font-semibold">Xem thêm ảnh</a>
+      </div>`:''}
       <div class="text-sm text-gray-500">👤 ${i.owner}</div>
-    </div>
-  ).join('');}
+    </div>`
+  ).join('');
+}
 
 /* ================= POPUP ================= */
 let modalImgs=[], modalIdx=0, scale=1, dx=0, dy=0;
@@ -154,10 +163,15 @@ document.addEventListener('click', e=>{
   openModal();
 });
 
-function openModal(){modalImg.src=modalImgs[modalIdx]; imgCount.innerText=${modalIdx+1}/${modalImgs.length}; imgModal.classList.remove('hidden');}
+function openModal(){
+  modalImg.src=modalImgs[modalIdx]; 
+  imgCount.innerText=`${modalIdx+1}/${modalImgs.length}`; 
+  imgModal.classList.remove('hidden');
+}
+
 function closeModal(){imgModal.classList.add('hidden');}
 function reset(){scale=1; dx=0; dy=0; swipeStartX=0; swipeStartY=0; apply();}
-function apply(){modalImg.style.transform=translate(${dx}px,${dy}px) scale(${scale});}
+function apply(){modalImg.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;}
 
 /* TOUCH EVENTS */
 imgModal.addEventListener('touchstart', e=>{
@@ -202,4 +216,3 @@ loadData();
 </script>
 </body>
 </html>
-
