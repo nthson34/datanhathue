@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>DỮ LIỆU NHÀ THUÊ</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -13,9 +13,18 @@ body{font-family:Inter,sans-serif;background:#f1f5f9}
 .card{border-radius:18px}
 .badge{font-size:12px;padding:4px 10px;border-radius:999px}
 .thumb{
-  height:110px;border-radius:14px;
+  height:110px;
+  border-radius:14px;
   background:#e5e7eb center/cover no-repeat;
   cursor:pointer
+}
+#imgModal{touch-action:none;z-index:50}
+#modalImg{
+  max-width:95vw;
+  max-height:90vh;
+  transform-origin:center;
+  transition:transform .12s ease;
+  user-select:none
 }
 </style>
 </head>
@@ -42,13 +51,21 @@ body{font-family:Inter,sans-serif;background:#f1f5f9}
   </div>
 
   <div id="list" class="space-y-4 hidden"></div>
+
   <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
-    Không tìm thấy dữ liệu
+    Không tìm thấy tài sản phù hợp
   </div>
 </main>
 
+<!-- IMAGE MODAL -->
+<div id="imgModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center">
+  <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
+  <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
+  <img id="modalImg">
+</div>
+
 <script>
-/* ============ CONFIG ============ */
+/* ================= CONFIG ================= */
 const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
 const GID = '61368668';
 const QUERY = 'select A,B,C,D,E,F,G,H,I,J';
@@ -57,7 +74,7 @@ const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GI
 const $ = id => document.getElementById(id);
 let DATA = [], VIEW = [];
 
-/* ============ UTIL ============ */
+/* ================= UTIL ================= */
 function cleanJSON(t){
   return JSON.parse(
     t.replace('/*O_o*/','')
@@ -78,7 +95,7 @@ function driveToImage(url){
   return m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : '';
 }
 
-/* ============ LOAD ============ */
+/* ================= LOAD DATA ================= */
 async function loadData(){
   const res = await fetch(URL);
   const txt = await res.text();
@@ -107,10 +124,10 @@ async function loadData(){
   $('btn').disabled = false;
 
   renderText(VIEW);
-  requestIdleCallback(loadImages); // ⬅ load ảnh sau
+  requestIdleCallback(loadImages);
 }
 
-/* ============ RENDER TEXT FIRST ============ */
+/* ================= RENDER TEXT FIRST ================= */
 function renderText(arr){
   const box = $('list');
   box.innerHTML = '';
@@ -150,7 +167,7 @@ function renderText(arr){
   `).join('');
 }
 
-/* ============ LAZY IMAGE LOAD ============ */
+/* ================= LAZY LOAD IMAGES ================= */
 function loadImages(){
   document.querySelectorAll('[data-idx]').forEach(card=>{
     const idx = +card.dataset.idx;
@@ -163,21 +180,19 @@ function loadImages(){
     `).join('');
   });
 
-  // load ảnh khi vào viewport
   const io = new IntersectionObserver(entries=>{
     entries.forEach(e=>{
       if(e.isIntersecting){
-        const el = e.target;
-        el.style.backgroundImage = `url('${el.dataset.src}')`;
-        io.unobserve(el);
+        e.target.style.backgroundImage = `url('${e.target.dataset.src}')`;
+        io.unobserve(e.target);
       }
     });
-  },{rootMargin:'100px'});
+  },{rootMargin:'120px'});
 
   document.querySelectorAll('.thumb').forEach(t=>io.observe(t));
 }
 
-/* ============ SEARCH ============ */
+/* ================= SEARCH ================= */
 function search(){
   const k = $('search').value.toLowerCase().trim();
   VIEW = !k ? [...DATA] : DATA.filter(i =>
@@ -188,13 +203,33 @@ function search(){
   requestIdleCallback(loadImages);
 }
 
+/* ================= IMAGE MODAL ================= */
+let modalImgs=[], modalIdx=0;
+const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
+
+document.addEventListener('click', e=>{
+  const t = e.target.closest('.thumb');
+  if(!t) return;
+  modalImgs = DATA[+t.closest('[data-idx]').dataset.idx].images;
+  modalIdx = [...t.parentNode.children].indexOf(t);
+  modalImg.src = modalImgs[modalIdx];
+  imgCount.textContent = `${modalIdx+1}/${modalImgs.length}`;
+  imgModal.classList.remove('hidden');
+});
+
+function closeModal(){
+  imgModal.classList.add('hidden');
+}
+
+/* ================= EVENTS ================= */
 $('btn').onclick = search;
 $('search').addEventListener('keydown', e=>{
   if(e.key === 'Enter') search();
 });
 
-/* ============ INIT ============ */
+/* ================= INIT ================= */
 loadData();
 </script>
+
 </body>
 </html>
