@@ -2,167 +2,204 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tra cứu tài sản</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>DỮ LIỆU NHÀ THUÊ</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-body { font-family: Inter, sans-serif; background:#f1f5f9; }
-.card { border-radius:16px; }
-.badge { font-size:12px; padding:4px 10px; border-radius:999px; }
+body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
+.card{border-radius:18px}
+.badge{font-size:12px;padding:4px 10px;border-radius:999px}
+.thumb{height:110px;border-radius:14px;background-size:cover;background-position:center;cursor:pointer}
+#imgModal{touch-action:none;z-index:50}
+#modalImg{max-width:95vw;max-height:90vh;transform-origin:center;transition:transform .12s ease;user-select:none}
 </style>
 </head>
 
-<body class="min-h-screen">
+<body>
 
-<!-- HEADER -->
-<header class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white sticky top-0 z-10 shadow">
+<header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-20 shadow">
   <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
-    <h1 class="text-xl font-bold text-center">Tra Cứu Thông Tin Tài Sản</h1>
-
+    <h1 class="text-2xl font-extrabold text-center">DỮ LIỆU NHÀ THUÊ</h1>
     <div class="flex gap-2">
-      <input id="search" type="text"
-        placeholder="🔍 Nhập địa chỉ, SĐT, giá..."
-        class="flex-1 p-3 rounded-xl text-gray-800 text-sm"
-        disabled>
-      <button id="btn"
-        class="bg-white/20 px-4 rounded-xl font-semibold text-sm"
-        disabled>
-        Tìm
-      </button>
+      <input id="search" type="text" placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng" class="flex-1 p-3 rounded-xl text-gray-800" disabled>
+      <button id="btn" class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>Tìm</button>
     </div>
   </div>
 </header>
 
-<!-- CONTENT -->
-<main class="max-w-3xl mx-auto p-3 space-y-3">
-
+<main class="max-w-3xl mx-auto p-3 space-y-4">
   <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
     <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
     <p class="text-sm">Đang tải dữ liệu...</p>
   </div>
-
-  <div id="list" class="space-y-3 hidden"></div>
-
-  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4 text-sm">
-    Không tìm thấy kết quả phù hợp
+  <div id="list" class="space-y-4 hidden"></div>
+  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
+    Không tìm thấy tài sản phù hợp
   </div>
-
 </main>
 
+<div id="imgModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center">
+  <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
+  <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
+  <img id="modalImg">
+</div>
+
 <script>
-/* ================== CONFIG ================== */
-const SHEET_ID = '14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
-const GID = '61368668';
-const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G')}`;
+/* CONFIG */
+const SHEET_ID='14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
+const GID='61368668';
+const URL=https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')};
+const $=id=>document.getElementById(id);
+let DATA=[], DISPLAY_DATA=[];
 
-/* ================== STATE ================== */
-let DATA = [];
+/* CLEAN JSON */
+const cleanJSON=t=>JSON.parse(t.replace('/*O_o*/','').replace('google.visualization.Query.setResponse(','').slice(0,-2));
+function driveToImage(url){if(!url)return'';let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);return m?https://lh3.googleusercontent.com/d/${m[1]}=w800:''}
 
-/* ================== HELPERS ================== */
-const $ = id => document.getElementById(id);
-
-const cleanJSON = t => JSON.parse(
-  t.replace('/*O_o*/','')
-   .replace('google.visualization.Query.setResponse(','')
-   .slice(0,-2)
-);
-
-/* ================== FETCH DATA ================== */
-async function loadData() {
-  try {
-    const res = await fetch(URL);
-    const txt = await res.text();
-    const json = cleanJSON(txt);
-
-    DATA = json.table.rows.map(r => ({
-      owner: r.c?.[0]?.v || '',
-      phone: r.c?.[1]?.v || '',
-      address: r.c?.[2]?.v || '',
-      image: r.c?.[3]?.v || '',
-      price: r.c?.[4]?.v || '',
-      deposit: r.c?.[5]?.v || '',
-      commission: r.c?.[6]?.v || ''
-    })).filter(i => i.address);
-
-    $('loading').classList.add('hidden');
-    $('search').disabled = false;
-    $('btn').disabled = false;
-
-    render(DATA);
-  } catch (e) {
-    $('loading').innerHTML = '<p class="text-red-600 font-bold">Không thể tải dữ liệu</p>';
-  }
+/* LOAD DATA */
+async function loadData(){
+  const res=await fetch(URL);
+  const txt=await res.text();
+  const json=cleanJSON(txt);
+  DATA=json.table.rows.map(r=>{
+    const images=[driveToImage(r.c?.[7]?.v),driveToImage(r.c?.[8]?.v),driveToImage(r.c?.[9]?.v)].filter(Boolean);
+    return{
+      owner:r.c?.[0]?.v||'',
+      phone:r.c?.[1]?.v||'',
+      address:r.c?.[2]?.v||'',
+      price:r.c?.[3]?.v||'',
+      deposit:r.c?.[4]?.v||'',
+      commission:r.c?.[5]?.v||'',
+      imageLink:r.c?.[6]?.v||'',
+      images
+    };
+  }).filter(i=>i.address);
+  DISPLAY_DATA = [...DATA];
+  $('loading').classList.add('hidden');
+  $('search').disabled=false;
+  $('btn').disabled=false;
+  render(DISPLAY_DATA);
 }
 
-/* ================== RENDER ================== */
-function render(arr) {
-  const box = $('list');
-  box.innerHTML = '';
-  $('empty').classList.add('hidden');
+/* SEARCH */
+function search(){
+  const k=$('search').value.toLowerCase().trim();
+  $('search').blur();
+  DISPLAY_DATA = !k ? [...DATA] : DATA.filter(i=>[i.address,i.phone,i.price,i.deposit,i.commission].join(' ').toLowerCase().includes(k));
+  render(DISPLAY_DATA);
+}
 
-  if (!arr.length) {
+/* COPY PHONE */
+function copyPhone(btn,phone){navigator.clipboard.writeText(phone).then(()=>{const old=btn.innerHTML;btn.innerHTML='✓';setTimeout(()=>btn.innerHTML=old,1000);});}
+
+/* RENDER */
+function render(arr){
+  const box=$('list'); 
+  box.innerHTML=''; 
+  $('empty').classList.add('hidden');
+  
+  if(!arr.length){
     box.classList.add('hidden');
     $('empty').classList.remove('hidden');
     return;
   }
 
   box.classList.remove('hidden');
-
-  box.innerHTML = arr.map(i => `
-    <div class="card bg-white p-4 shadow space-y-3">
-
-      <!-- ADDRESS -->
-      <div class="font-semibold text-indigo-700">📍 ${i.address}</div>
-
-      <!-- PHONE -->
-      <div class="flex gap-2 text-sm">
-        <a href="tel:${i.phone}" class="flex-1 bg-green-100 text-green-700 px-3 py-2 rounded-xl text-center">📞 ${i.phone}</a>
-        <button onclick="navigator.clipboard.writeText('${i.phone}')"
-          class="bg-gray-100 px-3 py-2 rounded-xl">📋</button>
+  box.innerHTML=arr.map((i,ci)=>    <div class="card bg-white p-4 shadow space-y-3">
+      ${i.images.length?<div class="grid grid-cols-3 gap-2">        ${i.images.map((img,idx)=>          <div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>
+        ).join('')}      </div>:''}
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+        <div class="text-xs uppercase text-indigo-500">Địa chỉ</div>
+        <div class="font-bold text-indigo-800">
+          📍 <a href="${i.imageLink||'#'}" target="_blank" class="hover:underline">${i.address}</a>
+        </div>
       </div>
 
-      <!-- INFO -->
-      <div class="flex flex-wrap gap-2 text-sm">
-        <span class="badge bg-red-100 text-red-600">Giá: ${i.price}</span>
-        <span class="badge bg-gray-100">Cọc: ${i.deposit}</span>
-        <span class="badge bg-blue-100 text-blue-700">HH: ${i.commission}</span>
+      <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
+        💰 Giá thuê: ${i.price}
       </div>
 
-      <!-- META -->
-      <div class="flex justify-between items-center text-sm text-gray-500">
-        <span>👤 ${i.owner}</span>
-        ${i.image ? `<a href="${i.image}" target="_blank" class="text-blue-600 underline">📁 Hình ảnh</a>` : ''}
+      <div class="flex gap-2">
+        <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
+        <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
       </div>
 
+      <div class="flex gap-2">
+        <a href="tel:${i.phone}" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
+          📞 GỌI NGAY (${i.phone})
+        </a>
+        <button onclick="copyPhone(this,'${i.phone}')" class="bg-gray-200 px-3 rounded-xl">📋</button>
+      </div>
+
+      ${i.images.length>1?<div class="text-right">        <a href="${i.imageLink||'#'}" target="_blank" class="text-sm text-blue-600 hover:underline font-semibold">Xem thêm ảnh</a>
+      </div>:''}
+      <div class="text-sm text-gray-500">👤 ${i.owner}</div>
     </div>
-  `).join('');
-}
+  ).join('');}
 
-/* ================== SEARCH ================== */
-function search() {
-  const k = $('search').value.toLowerCase().trim();
-  if (!k) return render(DATA);
+/* ================= POPUP ================= */
+let modalImgs=[], modalIdx=0, scale=1, dx=0, dy=0;
+let swipeStartX=0, swipeStartY=0, startDist=0;
+const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
 
-  render(
-    DATA.filter(i =>
-      [i.address,i.phone,i.price,i.deposit,i.commission]
-        .join(' ')
-        .toLowerCase()
-        .includes(k)
-    )
-  );
-}
+document.addEventListener('click', e=>{
+  const t = e.target.closest('.thumb'); if(!t) return;
+  const cardIdx = +t.dataset.card;
+  modalImgs = DISPLAY_DATA[cardIdx].images;
+  modalIdx = +t.dataset.idx;
+  reset();
+  openModal();
+});
 
-/* ================== EVENTS ================== */
-$('btn').onclick = search;
-$('search').addEventListener('keydown', e => e.key === 'Enter' && search());
+function openModal(){modalImg.src=modalImgs[modalIdx]; imgCount.innerText=${modalIdx+1}/${modalImgs.length}; imgModal.classList.remove('hidden');}
+function closeModal(){imgModal.classList.add('hidden');}
+function reset(){scale=1; dx=0; dy=0; swipeStartX=0; swipeStartY=0; apply();}
+function apply(){modalImg.style.transform=translate(${dx}px,${dy}px) scale(${scale});}
 
-/* ================== INIT ================== */
+/* TOUCH EVENTS */
+imgModal.addEventListener('touchstart', e=>{
+  if(e.touches.length===1 && scale===1){swipeStartX = e.touches[0].clientX; swipeStartY=e.touches[0].clientY;}
+  else if(e.touches.length===2){
+    startDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+  }
+},{passive:false});
+
+imgModal.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  if(e.touches.length===2){
+    let d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    scale=Math.min(Math.max(1, scale*d/startDist), 3); startDist=d;
+  } else if(e.touches.length===1 && scale>1){
+    dx += e.touches[0].clientX - swipeStartX;
+    dy += e.touches[0].clientY - swipeStartY;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    apply();
+  }
+},{passive:false});
+
+imgModal.addEventListener('touchend', e=>{
+  if(scale===1 && e.changedTouches.length===1){
+    const swipeEndX = e.changedTouches[0].clientX;
+    const diff = swipeEndX - swipeStartX;
+    if(Math.abs(diff) > 40){
+      modalIdx = diff<0 ? (modalIdx+1)%modalImgs.length : (modalIdx-1+modalImgs.length)%modalImgs.length;
+      reset(); openModal();
+    }
+  }
+  dx=0; dy=0; swipeStartX=0; swipeStartY=0;
+});
+
+/* EVENTS */
+$('btn').onclick=search;
+$('search').addEventListener('keydown', e=>{if(e.key==='Enter') search();});
+
+/* LOAD */
 loadData();
 </script>
-
 </body>
 </html>
+cho tôi 1 bản copy code này, lưu ý không chỉnh bất kỳ chữ nào của code
