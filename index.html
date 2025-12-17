@@ -101,22 +101,20 @@ async function loadData(){
   const txt = await res.text();
   const json = cleanJSON(txt);
 
-  DATA = json.table.rows.map(r=>{
-    return {
-      owner: r.c?.[0]?.v || '',
-      phone: r.c?.[1]?.v || '',
-      address: r.c?.[2]?.v || '',
-      price: r.c?.[3]?.v || '',
-      deposit: r.c?.[4]?.v || '',
-      commission: r.c?.[5]?.v || '',
-      imageLink: r.c?.[6]?.v || '',
-      images: [
-        driveToImage(r.c?.[7]?.v),
-        driveToImage(r.c?.[8]?.v),
-        driveToImage(r.c?.[9]?.v)
-      ].filter(Boolean)
-    };
-  }).filter(i=>i.address);
+  DATA = json.table.rows.map(r=>({
+    owner: r.c?.[0]?.v || '',
+    phone: r.c?.[1]?.v || '',
+    address: r.c?.[2]?.v || '',
+    price: r.c?.[3]?.v || '',
+    deposit: r.c?.[4]?.v || '',
+    commission: r.c?.[5]?.v || '',
+    imageLink: r.c?.[6]?.v || '',
+    images: [
+      driveToImage(r.c?.[7]?.v),
+      driveToImage(r.c?.[8]?.v),
+      driveToImage(r.c?.[9]?.v)
+    ].filter(Boolean)
+  })).filter(i=>i.address);
 
   VIEW = [...DATA];
   $('loading').classList.add('hidden');
@@ -127,7 +125,7 @@ async function loadData(){
   requestIdleCallback(loadImages);
 }
 
-/* ================= RENDER TEXT FIRST ================= */
+/* ================= RENDER TEXT ================= */
 function renderText(arr){
   const box = $('list');
   box.innerHTML = '';
@@ -140,8 +138,10 @@ function renderText(arr){
   }
 
   box.classList.remove('hidden');
-  box.innerHTML = arr.map((i,idx)=>`
-    <div class="card bg-white p-4 shadow space-y-3" data-idx="${idx}">
+  box.innerHTML = arr.map(i=>`
+    <div class="card bg-white p-4 shadow space-y-3"
+         data-images='${JSON.stringify(i.images)}'>
+
       <div class="grid grid-cols-3 gap-2 imgs"></div>
 
       <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
@@ -169,9 +169,8 @@ function renderText(arr){
 
 /* ================= LAZY LOAD IMAGES ================= */
 function loadImages(){
-  document.querySelectorAll('[data-idx]').forEach(card=>{
-    const idx = +card.dataset.idx;
-    const imgs = DATA[idx].images;
+  document.querySelectorAll('.card[data-images]').forEach(card=>{
+    const imgs = JSON.parse(card.dataset.images || '[]');
     if(!imgs.length) return;
 
     const box = card.querySelector('.imgs');
@@ -187,7 +186,7 @@ function loadImages(){
         io.unobserve(e.target);
       }
     });
-  },{rootMargin:'120px'});
+  },{rootMargin:'150px'});
 
   document.querySelectorAll('.thumb').forEach(t=>io.observe(t));
 }
@@ -210,8 +209,11 @@ const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
 document.addEventListener('click', e=>{
   const t = e.target.closest('.thumb');
   if(!t) return;
-  modalImgs = DATA[+t.closest('[data-idx]').dataset.idx].images;
+
+  const card = t.closest('.card');
+  modalImgs = JSON.parse(card.dataset.images || '[]');
   modalIdx = [...t.parentNode.children].indexOf(t);
+
   modalImg.src = modalImgs[modalIdx];
   imgCount.textContent = `${modalIdx+1}/${modalImgs.length}`;
   imgModal.classList.remove('hidden');
