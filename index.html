@@ -1,449 +1,218 @@
-diff --git a/index.html b/index.html
-index 26da3aa0fbeb51d63c301e6b2c74208fe7361711..fdb55cc498ea0b8a37ca7d6fb4ae64d40b0c1736 100644
---- a/index.html
-+++ b/index.html
-@@ -1,175 +1,285 @@
- <!DOCTYPE html>
- <html lang="vi">
- <head>
- <meta charset="UTF-8" />
- <meta name="viewport" content="width=device-width,initial-scale=1.0" />
- <title>DỮ LIỆU NHÀ THUÊ</title>
- 
- <script src="https://cdn.tailwindcss.com"></script>
- <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
- 
--<style>
--body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
--.card{border-radius:18px}
--.badge{font-size:12px;padding:4px 10px;border-radius:999px}
--.thumb{height:110px;border-radius:14px;background-size:cover;background-position:center;cursor:pointer}
--#imgModal{touch-action:none;z-index:50}
--#modalImg{max-width:95vw;max-height:90vh;transform-origin:center;transition:transform .12s ease;user-select:none}
--</style>
-+<style>
-+body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
-+.card{border-radius:18px}
-+.badge{font-size:12px;padding:4px 10px;border-radius:999px}
-+.thumb{height:120px;border-radius:14px;background-size:cover;background-position:center;cursor:pointer}
-+.pill{border-radius:999px}
-+.stat{background:#eef2ff;border:1px solid #c7d2fe}
-+.field{border:1px solid #e2e8f0}
-+.highlight{background:#fde68a;border-radius:6px;padding:0 2px}
-+#imgModal{touch-action:none;z-index:50}
-+#modalImg{max-width:95vw;max-height:90vh;transform-origin:center;transition:transform .12s ease;user-select:none}
-+</style>
- </head>
- 
- <body>
- 
--<header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-20 shadow">
--  <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
--    <h1 class="text-2xl font-extrabold text-center">DỮ LIỆU NHÀ THUÊ</h1>
--    <div class="flex gap-2">
--      <input id="search" type="text" placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng" class="flex-1 p-3 rounded-xl text-gray-800" disabled>
--      <button id="btn" class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>Tìm</button>
--    </div>
--  </div>
--</header>
--
--<main class="max-w-3xl mx-auto p-3 space-y-4">
--  <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
--    <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
--    <p class="text-sm">Đang tải dữ liệu...</p>
--  </div>
--  <div id="list" class="space-y-4 hidden"></div>
-+<header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-20 shadow">
-+  <div class="max-w-4xl mx-auto px-4 py-5 space-y-4">
-+    <div class="text-center space-y-1">
-+      <h1 class="text-2xl sm:text-3xl font-extrabold">DỮ LIỆU NHÀ THUÊ</h1>
-+      <p class="text-sm text-indigo-100">Tìm kiếm nhanh theo địa chỉ, SĐT, giá thuê hoặc hoa hồng</p>
-+    </div>
-+    <div class="bg-white/10 rounded-2xl p-3 space-y-3">
-+      <div class="flex flex-col sm:flex-row gap-2">
-+        <input id="search" type="text" placeholder="🔍 Nhập từ khóa..." class="field flex-1 p-3 rounded-xl text-gray-800" disabled>
-+        <button id="btn" class="bg-white/20 px-4 py-3 rounded-xl font-semibold text-sm" disabled>Tìm</button>
-+        <button id="clearBtn" class="bg-white/10 px-4 py-3 rounded-xl font-semibold text-sm" disabled>Xóa lọc</button>
-+      </div>
-+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-+        <input id="minPrice" type="text" inputmode="numeric" placeholder="Giá từ" class="field p-2 rounded-xl text-gray-800" disabled>
-+        <input id="maxPrice" type="text" inputmode="numeric" placeholder="Giá đến" class="field p-2 rounded-xl text-gray-800" disabled>
-+        <input id="minCommission" type="text" inputmode="numeric" placeholder="HH từ" class="field p-2 rounded-xl text-gray-800" disabled>
-+        <input id="minDeposit" type="text" inputmode="numeric" placeholder="Cọc từ" class="field p-2 rounded-xl text-gray-800" disabled>
-+      </div>
-+      <div class="flex flex-col sm:flex-row gap-2">
-+        <select id="sortBy" class="field p-2 rounded-xl text-gray-800 text-sm" disabled>
-+          <option value="newest">Mặc định</option>
-+          <option value="priceAsc">Giá tăng dần</option>
-+          <option value="priceDesc">Giá giảm dần</option>
-+          <option value="commissionDesc">Hoa hồng cao</option>
-+        </select>
-+        <label class="flex items-center gap-2 text-sm">
-+          <input id="hasImages" type="checkbox" class="h-4 w-4 rounded border-white/40" disabled>
-+          Chỉ hiển thị có ảnh
-+        </label>
-+      </div>
-+    </div>
-+  </div>
-+</header>
-+
-+<main class="max-w-4xl mx-auto p-3 space-y-4">
-+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-+    <div class="stat rounded-2xl p-3 text-center">
-+      <div class="text-xs text-indigo-500 uppercase">Tổng tài sản</div>
-+      <div id="totalCount" class="text-xl font-extrabold text-indigo-700">0</div>
-+    </div>
-+    <div class="stat rounded-2xl p-3 text-center">
-+      <div class="text-xs text-indigo-500 uppercase">Đang hiển thị</div>
-+      <div id="displayCount" class="text-xl font-extrabold text-indigo-700">0</div>
-+    </div>
-+    <div class="stat rounded-2xl p-3 text-center">
-+      <div class="text-xs text-indigo-500 uppercase">Giá thấp nhất</div>
-+      <div id="minPriceStat" class="text-lg font-extrabold text-indigo-700">-</div>
-+    </div>
-+    <div class="stat rounded-2xl p-3 text-center">
-+      <div class="text-xs text-indigo-500 uppercase">Giá cao nhất</div>
-+      <div id="maxPriceStat" class="text-lg font-extrabold text-indigo-700">-</div>
-+    </div>
-+  </div>
-+  <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
-+    <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
-+    <p class="text-sm">Đang tải dữ liệu...</p>
-+  </div>
-+  <div id="list" class="space-y-4 hidden"></div>
-   <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
-     Không tìm thấy tài sản phù hợp
-   </div>
- </main>
- 
- <div id="imgModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center">
-   <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
-   <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
-   <img id="modalImg">
- </div>
- 
- <script>
- /* CONFIG */
- const SHEET_ID='14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
- const GID='61368668';
- const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')}`;
--const $=id=>document.getElementById(id);
--let DATA=[], DISPLAY_DATA=[];
-+const $=id=>document.getElementById(id);
-+let DATA=[], DISPLAY_DATA=[];
-+let debounceTimer;
- 
- /* CLEAN JSON */
- const cleanJSON=t=>JSON.parse(t.replace('/*O_o*/','').replace('google.visualization.Query.setResponse(','').slice(0,-2));
- function driveToImage(url){if(!url)return '';let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);return m?`https://lh3.googleusercontent.com/d/${m[1]}=w800`:''}
- 
- /* LOAD DATA */
--async function loadData(){
--  try {
--    const res=await fetch(URL);
--    const txt=await res.text();
--    const json=cleanJSON(txt);
--    DATA=json.table.rows.map(r=>{
-+async function loadData(){
-+  try {
-+    const res=await fetch(URL);
-+    const txt=await res.text();
-+    const json=cleanJSON(txt);
-+    DATA=json.table.rows.map(r=>{
-       const images=[driveToImage(r.c?.[7]?.v),driveToImage(r.c?.[8]?.v),driveToImage(r.c?.[9]?.v)].filter(Boolean);
--      return{
--        owner:r.c?.[0]?.v||'',
--        phone:r.c?.[1]?.v||'',
--        address:r.c?.[2]?.v||'',
--        price:r.c?.[3]?.v||'',
--        deposit:r.c?.[4]?.v||'',
--        commission:r.c?.[5]?.v||'',
--        imageLink:r.c?.[6]?.v||'',
--        images
--      };
--    }).filter(i=>i.address);
--    DISPLAY_DATA = [...DATA];
--    $('loading').classList.add('hidden');
--    $('search').disabled=false;
--    $('btn').disabled=false;
--    render(DISPLAY_DATA);
--  } catch (err) {
--    console.error(err);
--    document.querySelector('#loading p').innerText = 'Lỗi tải dữ liệu. Hãy kiểm tra kết nối hoặc quyền truy cập file.';
--  }
--}
--
--/* SEARCH */
--function search(){
--  const k=$('search').value.toLowerCase().trim();
--  $('search').blur();
--  DISPLAY_DATA = !k ? [...DATA] : DATA.filter(i=>[i.address,i.phone,i.price,i.deposit,i.commission].join(' ').toLowerCase().includes(k));
--  render(DISPLAY_DATA);
--}
-+      return{
-+        owner:r.c?.[0]?.v||'',
-+        phone:r.c?.[1]?.v||'',
-+        address:r.c?.[2]?.v||'',
-+        price:r.c?.[3]?.v||'',
-+        deposit:r.c?.[4]?.v||'',
-+        commission:r.c?.[5]?.v||'',
-+        imageLink:r.c?.[6]?.v||'',
-+        images,
-+        priceValue:extractNumber(r.c?.[3]?.v),
-+        depositValue:extractNumber(r.c?.[4]?.v),
-+        commissionValue:extractNumber(r.c?.[5]?.v)
-+      };
-+    }).filter(i=>i.address);
-+    DISPLAY_DATA = [...DATA];
-+    $('loading').classList.add('hidden');
-+    enableFilters();
-+    updateStats(DATA, DISPLAY_DATA);
-+    render(DISPLAY_DATA);
-+  } catch (err) {
-+    console.error(err);
-+    document.querySelector('#loading p').innerText = 'Lỗi tải dữ liệu. Hãy kiểm tra kết nối hoặc quyền truy cập file.';
-+  }
-+}
-+
-+function enableFilters(){
-+  ['search','btn','clearBtn','minPrice','maxPrice','minCommission','minDeposit','sortBy','hasImages']
-+    .forEach(id=>{$(id).disabled=false;});
-+}
-+
-+function extractNumber(value){
-+  if(!value) return 0;
-+  const cleaned=String(value).replace(/[^\d.,]/g,'').replace(/,/g,'.');
-+  const num=parseFloat(cleaned);
-+  return Number.isFinite(num)?num:0;
-+}
-+
-+function highlight(text, keyword){
-+  if(!keyword) return text;
-+  const safe=keyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-+  return text.replace(new RegExp(`(${safe})`,'gi'), '<span class="highlight">$1</span>');
-+}
-+
-+function getFilters(){
-+  return{
-+    keyword:$('search').value.toLowerCase().trim(),
-+    minPrice:extractNumber($('minPrice').value),
-+    maxPrice:extractNumber($('maxPrice').value),
-+    minCommission:extractNumber($('minCommission').value),
-+    minDeposit:extractNumber($('minDeposit').value),
-+    hasImages:$('hasImages').checked,
-+    sortBy:$('sortBy').value
-+  };
-+}
-+
-+/* SEARCH */
-+function search(){
-+  const filters=getFilters();
-+  const k=filters.keyword;
-+  DISPLAY_DATA = DATA.filter(i=>{
-+    const haystack=[i.address,i.phone,i.price,i.deposit,i.commission,i.owner].join(' ').toLowerCase();
-+    if(k && !haystack.includes(k)) return false;
-+    if(filters.minPrice && i.priceValue < filters.minPrice) return false;
-+    if(filters.maxPrice && i.priceValue > filters.maxPrice) return false;
-+    if(filters.minCommission && i.commissionValue < filters.minCommission) return false;
-+    if(filters.minDeposit && i.depositValue < filters.minDeposit) return false;
-+    if(filters.hasImages && !i.images.length) return false;
-+    return true;
-+  });
-+  DISPLAY_DATA = sortData(DISPLAY_DATA, filters.sortBy);
-+  updateStats(DATA, DISPLAY_DATA);
-+  render(DISPLAY_DATA);
-+}
-+
-+function sortData(arr, sortBy){
-+  const sorted=[...arr];
-+  if(sortBy==='priceAsc') sorted.sort((a,b)=>a.priceValue-b.priceValue);
-+  if(sortBy==='priceDesc') sorted.sort((a,b)=>b.priceValue-a.priceValue);
-+  if(sortBy==='commissionDesc') sorted.sort((a,b)=>b.commissionValue-a.commissionValue);
-+  return sorted;
-+}
- 
- /* COPY PHONE */
- function copyPhone(btn,phone){navigator.clipboard.writeText(phone).then(()=>{const old=btn.innerHTML;btn.innerHTML='✓';setTimeout(()=>btn.innerHTML=old,1000);});}
- 
- /* RENDER */
--function render(arr){
--  const box=$('list'); 
--  box.innerHTML=''; 
--  $('empty').classList.add('hidden');
--  
--  if(!arr.length){
--    box.classList.add('hidden');
--    $('empty').classList.remove('hidden');
--    return;
--  }
--
--  box.classList.remove('hidden');
--  box.innerHTML=arr.map((i,ci)=> `
--    <div class="card bg-white p-4 shadow space-y-3">
--      ${i.images.length?`<div class="grid grid-cols-3 gap-2">
--        ${i.images.map((img,idx)=> `<div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>`).join('')}
--      </div>`:''}
--      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
--        <div class="text-xs uppercase text-indigo-500">Địa chỉ</div>
--        <div class="font-bold text-indigo-800">
--          📍 <a href="${i.imageLink||'#'}" target="_blank" class="hover:underline">${i.address}</a>
--        </div>
--      </div>
--
--      <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
--        💰 Giá thuê: ${i.price}
--      </div>
--
--      <div class="flex gap-2">
--        <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
--        <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
--      </div>
--
--      <div class="flex gap-2">
--        <a href="tel:${i.phone}" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
--          📞 GỌI NGAY (${i.phone})
--        </a>
--        <button onclick="copyPhone(this,'${i.phone}')" class="bg-gray-200 px-3 rounded-xl">📋</button>
--      </div>
--
--      ${i.images.length>1?`<div class="text-right">
--        <a href="${i.imageLink||'#'}" target="_blank" class="text-sm text-blue-600 hover:underline font-semibold">Xem thêm ảnh</a>
--      </div>`:''}
--      <div class="text-sm text-gray-500">👤 ${i.owner}</div>
--    </div>`
--  ).join('');
--}
-+function render(arr){
-+  const box=$('list'); 
-+  box.innerHTML=''; 
-+  $('empty').classList.add('hidden');
-+  const k=$('search').value.trim();
-+  
-+  if(!arr.length){
-+    box.classList.add('hidden');
-+    $('empty').classList.remove('hidden');
-+    return;
-+  }
-+
-+  box.classList.remove('hidden');
-+  box.innerHTML=arr.map((i,ci)=> `
-+    <div class="card bg-white p-4 shadow space-y-3">
-+      ${i.images.length?`<div class="grid grid-cols-3 gap-2">
-+        ${i.images.map((img,idx)=> `<div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>`).join('')}
-+      </div>`:''}
-+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
-+        <div class="text-xs uppercase text-indigo-500">Địa chỉ</div>
-+        <div class="font-bold text-indigo-800">
-+          📍 <a href="${i.imageLink||'#'}" target="_blank" class="hover:underline">${highlight(i.address,k)}</a>
-+        </div>
-+      </div>
-+
-+      <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm flex items-center justify-between">
-+        <span>💰 Giá thuê: ${highlight(i.price,k)}</span>
-+        ${i.priceValue?`<span class="pill bg-white/70 px-3 py-1 text-xs text-red-600">Có thể thương lượng</span>`:''}
-+      </div>
-+
-+      <div class="flex flex-wrap gap-2">
-+        <span class="badge bg-gray-100">Cọc ${highlight(i.deposit,k)}</span>
-+        <span class="badge bg-green-100 text-green-700 font-semibold">HH ${highlight(i.commission,k)}</span>
-+        <span class="badge bg-blue-100 text-blue-700 font-semibold">SĐT ${highlight(i.phone,k)}</span>
-+      </div>
-+
-+      <div class="flex gap-2">
-+        <a href="tel:${i.phone}" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
-+          📞 GỌI NGAY (${i.phone})
-+        </a>
-+        <button onclick="copyPhone(this,'${i.phone}')" class="bg-gray-200 px-3 rounded-xl">📋</button>
-+      </div>
-+
-+      ${i.images.length>1?`<div class="text-right">
-+        <a href="${i.imageLink||'#'}" target="_blank" class="text-sm text-blue-600 hover:underline font-semibold">Xem thêm ảnh</a>
-+      </div>`:''}
-+      <div class="text-sm text-gray-500">👤 ${highlight(i.owner,k)}</div>
-+    </div>`
-+  ).join('');
-+}
-+
-+function updateStats(allData, displayData){
-+  $('totalCount').innerText=allData.length;
-+  $('displayCount').innerText=displayData.length;
-+  const prices=displayData.map(i=>i.priceValue).filter(Boolean);
-+  $('minPriceStat').innerText=prices.length?`${Math.min(...prices)}`:'-';
-+  $('maxPriceStat').innerText=prices.length?`${Math.max(...prices)}`:'-';
-+}
- 
- /* ================= POPUP ================= */
- let modalImgs=[], modalIdx=0, scale=1, dx=0, dy=0;
- let swipeStartX=0, swipeStartY=0, startDist=0;
- const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
- 
- document.addEventListener('click', e=>{
-   const t = e.target.closest('.thumb'); if(!t) return;
-   const cardIdx = +t.dataset.card;
-   modalImgs = DISPLAY_DATA[cardIdx].images;
-   modalIdx = +t.dataset.idx;
-   reset();
-   openModal();
- });
- 
- function openModal(){
-   modalImg.src=modalImgs[modalIdx]; 
-   imgCount.innerText=`${modalIdx+1}/${modalImgs.length}`; 
-   imgModal.classList.remove('hidden');
- }
- 
- function closeModal(){imgModal.classList.add('hidden');}
- function reset(){scale=1; dx=0; dy=0; swipeStartX=0; swipeStartY=0; apply();}
- function apply(){modalImg.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;}
- 
-@@ -185,34 +295,47 @@ imgModal.addEventListener('touchmove', e=>{
-   e.preventDefault();
-   if(e.touches.length===2){
-     let d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-     scale=Math.min(Math.max(1, scale*d/startDist), 3); startDist=d;
-   } else if(e.touches.length===1 && scale>1){
-     dx += e.touches[0].clientX - swipeStartX;
-     dy += e.touches[0].clientY - swipeStartY;
-     swipeStartX = e.touches[0].clientX;
-     swipeStartY = e.touches[0].clientY;
-     apply();
-   }
- },{passive:false});
- 
- imgModal.addEventListener('touchend', e=>{
-   if(scale===1 && e.changedTouches.length===1){
-     const swipeEndX = e.changedTouches[0].clientX;
-     const diff = swipeEndX - swipeStartX;
-     if(Math.abs(diff) > 40){
-       modalIdx = diff<0 ? (modalIdx+1)%modalImgs.length : (modalIdx-1+modalImgs.length)%modalImgs.length;
-       reset(); openModal();
-     }
-   }
-   dx=0; dy=0; swipeStartX=0; swipeStartY=0;
- });
- 
--/* EVENTS */
--$('btn').onclick=search;
--$('search').addEventListener('keydown', e=>{if(e.key==='Enter') search();});
-+function debounceSearch(){
-+  clearTimeout(debounceTimer);
-+  debounceTimer=setTimeout(search,300);
-+}
-+
-+/* EVENTS */
-+$('btn').onclick=search;
-+$('clearBtn').onclick=()=>{
-+  ['search','minPrice','maxPrice','minCommission','minDeposit'].forEach(id=>{$(id).value='';});
-+  $('hasImages').checked=false;
-+  $('sortBy').value='newest';
-+  search();
-+};
-+$('search').addEventListener('keydown', e=>{if(e.key==='Enter') search();});
-+['search','minPrice','maxPrice','minCommission','minDeposit','sortBy','hasImages']
-+  .forEach(id=>{$(id).addEventListener('input', debounceSearch);});
- 
- /* LOAD */
- loadData();
- </script>
- </body>
- </html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>DỮ LIỆU NHÀ THUÊ</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
+.card{border-radius:18px}
+.badge{font-size:12px;padding:4px 10px;border-radius:999px}
+.thumb{height:110px;border-radius:14px;background-size:cover;background-position:center;cursor:pointer}
+#imgModal{touch-action:none;z-index:50}
+#modalImg{max-width:95vw;max-height:90vh;transform-origin:center;transition:transform .12s ease;user-select:none}
+</style>
+</head>
+
+<body>
+
+<header class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white sticky top-0 z-20 shadow">
+  <div class="max-w-3xl mx-auto px-4 py-4 space-y-3">
+    <h1 class="text-2xl font-extrabold text-center">DỮ LIỆU NHÀ THUÊ</h1>
+    <div class="flex gap-2">
+      <input id="search" type="text" placeholder="🔍 Địa chỉ | SĐT | Giá | Hoa hồng" class="flex-1 p-3 rounded-xl text-gray-800" disabled>
+      <button id="btn" class="bg-white/20 px-4 rounded-xl font-semibold text-sm" disabled>Tìm</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto p-3 space-y-4">
+  <div id="loading" class="bg-white p-6 rounded-xl shadow text-center">
+    <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
+    <p class="text-sm">Đang tải dữ liệu...</p>
+  </div>
+  <div id="list" class="space-y-4 hidden"></div>
+  <div id="empty" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
+    Không tìm thấy tài sản phù hợp
+  </div>
+</main>
+
+<div id="imgModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center">
+  <div id="imgCount" class="absolute top-4 left-4 text-white text-sm"></div>
+  <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-3xl">✕</button>
+  <img id="modalImg">
+</div>
+
+<script>
+/* CONFIG */
+const SHEET_ID='14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A';
+const GID='61368668';
+const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J')}`;
+const $=id=>document.getElementById(id);
+let DATA=[], DISPLAY_DATA=[];
+
+/* CLEAN JSON */
+const cleanJSON=t=>JSON.parse(t.replace('/*O_o*/','').replace('google.visualization.Query.setResponse(','').slice(0,-2));
+function driveToImage(url){if(!url)return '';let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);return m?`https://lh3.googleusercontent.com/d/${m[1]}=w800`:''}
+
+/* LOAD DATA */
+async function loadData(){
+  try {
+    const res=await fetch(URL);
+    const txt=await res.text();
+    const json=cleanJSON(txt);
+    DATA=json.table.rows.map(r=>{
+      const images=[driveToImage(r.c?.[7]?.v),driveToImage(r.c?.[8]?.v),driveToImage(r.c?.[9]?.v)].filter(Boolean);
+      return{
+        owner:r.c?.[0]?.v||'',
+        phone:r.c?.[1]?.v||'',
+        address:r.c?.[2]?.v||'',
+        price:r.c?.[3]?.v||'',
+        deposit:r.c?.[4]?.v||'',
+        commission:r.c?.[5]?.v||'',
+        imageLink:r.c?.[6]?.v||'',
+        images
+      };
+    }).filter(i=>i.address);
+    DISPLAY_DATA = [...DATA];
+    $('loading').classList.add('hidden');
+    $('search').disabled=false;
+    $('btn').disabled=false;
+    render(DISPLAY_DATA);
+  } catch (err) {
+    console.error(err);
+    document.querySelector('#loading p').innerText = 'Lỗi tải dữ liệu. Hãy kiểm tra kết nối hoặc quyền truy cập file.';
+  }
+}
+
+/* SEARCH */
+function search(){
+  const k=$('search').value.toLowerCase().trim();
+  $('search').blur();
+  DISPLAY_DATA = !k ? [...DATA] : DATA.filter(i=>[i.address,i.phone,i.price,i.deposit,i.commission].join(' ').toLowerCase().includes(k));
+  render(DISPLAY_DATA);
+}
+
+/* COPY PHONE */
+function copyPhone(btn,phone){navigator.clipboard.writeText(phone).then(()=>{const old=btn.innerHTML;btn.innerHTML='✓';setTimeout(()=>btn.innerHTML=old,1000);});}
+
+/* RENDER */
+function render(arr){
+  const box=$('list'); 
+  box.innerHTML=''; 
+  $('empty').classList.add('hidden');
+  
+  if(!arr.length){
+    box.classList.add('hidden');
+    $('empty').classList.remove('hidden');
+    return;
+  }
+
+  box.classList.remove('hidden');
+  box.innerHTML=arr.map((i,ci)=> `
+    <div class="card bg-white p-4 shadow space-y-3">
+      ${i.images.length?`<div class="grid grid-cols-3 gap-2">
+        ${i.images.map((img,idx)=> `<div class="thumb" data-idx="${idx}" data-card="${ci}" style="background-image:url('${img}')" loading="lazy"></div>`).join('')}
+      </div>`:''}
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+        <div class="text-xs uppercase text-indigo-500">Địa chỉ</div>
+        <div class="font-bold text-indigo-800">
+          📍 <a href="${i.imageLink||'#'}" target="_blank" class="hover:underline">${i.address}</a>
+        </div>
+      </div>
+
+      <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
+        💰 Giá thuê: ${i.price}
+      </div>
+
+      <div class="flex gap-2">
+        <span class="badge bg-gray-100">Cọc ${i.deposit}</span>
+        <span class="badge bg-green-100 text-green-700 font-semibold">HH ${i.commission}</span>
+      </div>
+
+      <div class="flex gap-2">
+        <a href="tel:${i.phone}" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
+          📞 GỌI NGAY (${i.phone})
+        </a>
+        <button onclick="copyPhone(this,'${i.phone}')" class="bg-gray-200 px-3 rounded-xl">📋</button>
+      </div>
+
+      ${i.images.length>1?`<div class="text-right">
+        <a href="${i.imageLink||'#'}" target="_blank" class="text-sm text-blue-600 hover:underline font-semibold">Xem thêm ảnh</a>
+      </div>`:''}
+      <div class="text-sm text-gray-500">👤 ${i.owner}</div>
+    </div>`
+  ).join('');
+}
+
+/* ================= POPUP ================= */
+let modalImgs=[], modalIdx=0, scale=1, dx=0, dy=0;
+let swipeStartX=0, swipeStartY=0, startDist=0;
+const imgModal=$('imgModal'), modalImg=$('modalImg'), imgCount=$('imgCount');
+
+document.addEventListener('click', e=>{
+  const t = e.target.closest('.thumb'); if(!t) return;
+  const cardIdx = +t.dataset.card;
+  modalImgs = DISPLAY_DATA[cardIdx].images;
+  modalIdx = +t.dataset.idx;
+  reset();
+  openModal();
+});
+
+function openModal(){
+  modalImg.src=modalImgs[modalIdx]; 
+  imgCount.innerText=`${modalIdx+1}/${modalImgs.length}`; 
+  imgModal.classList.remove('hidden');
+}
+
+function closeModal(){imgModal.classList.add('hidden');}
+function reset(){scale=1; dx=0; dy=0; swipeStartX=0; swipeStartY=0; apply();}
+function apply(){modalImg.style.transform=`translate(${dx}px,${dy}px) scale(${scale})`;}
+
+/* TOUCH EVENTS */
+imgModal.addEventListener('touchstart', e=>{
+  if(e.touches.length===1 && scale===1){swipeStartX = e.touches[0].clientX; swipeStartY=e.touches[0].clientY;}
+  else if(e.touches.length===2){
+    startDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+  }
+},{passive:false});
+
+imgModal.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  if(e.touches.length===2){
+    let d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    scale=Math.min(Math.max(1, scale*d/startDist), 3); startDist=d;
+  } else if(e.touches.length===1 && scale>1){
+    dx += e.touches[0].clientX - swipeStartX;
+    dy += e.touches[0].clientY - swipeStartY;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    apply();
+  }
+},{passive:false});
+
+imgModal.addEventListener('touchend', e=>{
+  if(scale===1 && e.changedTouches.length===1){
+    const swipeEndX = e.changedTouches[0].clientX;
+    const diff = swipeEndX - swipeStartX;
+    if(Math.abs(diff) > 40){
+      modalIdx = diff<0 ? (modalIdx+1)%modalImgs.length : (modalIdx-1+modalImgs.length)%modalImgs.length;
+      reset(); openModal();
+    }
+  }
+  dx=0; dy=0; swipeStartX=0; swipeStartY=0;
+});
+
+/* EVENTS */
+$('btn').onclick=search;
+$('search').addEventListener('keydown', e=>{if(e.key==='Enter') search();});
+
+/* LOAD */
+loadData();
+</script>
+</body>
+</html>
