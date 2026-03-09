@@ -8,103 +8,110 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .card { border-radius: 20px; transition: transform 0.2s; }
-        .card:active { transform: scale(0.98); }
+        .card { border-radius: 20px; transition: transform 0.2s; overflow: hidden; }
         .badge { font-size: 11px; padding: 4px 12px; border-radius: 999px; font-weight: 600; }
-        .thumb { height: 140px; border-radius: 12px; background-size: cover; background-position: center; cursor: pointer; position: relative; }
-        .thumb::after { content: '🔍'; position: absolute; bottom: 8px; right: 8px; background: rgba(255,255,255,0.8); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-        #imgModal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        
+        /* Grid ảnh linh hoạt */
+        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .image-grid .thumb:first-child:nth-last-child(1) { grid-column: span 3; height: 220px; }
+        .image-grid .thumb:first-child:nth-last-child(2), 
+        .image-grid .thumb:first-child:nth-last-child(2) ~ .thumb { grid-column: span 1; height: 150px; }
+        
+        .thumb { height: 110px; border-radius: 8px; background-size: cover; background-position: center; cursor: pointer; position: relative; background-color: #f1f5f9; border: 1px solid #f1f5f9; }
+        
+        #imgModal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; padding: 10px; }
         #modalImg { max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain; }
-        .copy-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; display: none; z-index: 200; font-size: 14px; }
+        .copy-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; display: none; z-index: 200; font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <header class="bg-indigo-700 text-white sticky top-0 z-40 shadow-md">
     <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 class="font-extrabold text-xl tracking-tight">DỮ LIỆU NHÀ THUÊ</h1>
-        <div id="count" class="bg-indigo-800 px-3 py-1 rounded-full text-xs font-medium">0 căn</div>
+        <h1 class="font-extrabold text-xl tracking-tight uppercase">Dữ Liệu Nhà Thuê</h1>
+        <div id="count" class="bg-indigo-800 px-3 py-1 rounded-full text-xs font-medium">Đang tải...</div>
     </div>
 </header>
 
 <main class="max-w-3xl mx-auto p-4 space-y-4">
     <!-- Search Bar -->
-    <div class="relative group">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
-        <input id="search" type="text" 
-               placeholder="Tìm địa chỉ, giá, hoặc ghi chú..." 
-               class="w-full pl-10 pr-4 py-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none transition-all">
+    <div class="relative flex items-center gap-2">
+        <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+            <input id="search" type="text" 
+                   placeholder="Nhập địa chỉ, giá... rồi nhấn Enter" 
+                   class="w-full pl-10 pr-4 py-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none transition-all text-sm">
+        </div>
+        <button id="searchBtn" class="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-colors shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </button>
     </div>
 
-    <!-- Loading State -->
     <div id="loading" class="flex flex-col items-center py-20 space-y-4 text-gray-400">
         <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         <p class="text-sm font-medium">Đang đồng bộ dữ liệu...</p>
     </div>
 
-    <!-- List -->
-    <div id="list" class="space-y-5 pb-20"></div>
+    <div id="list" class="space-y-6 pb-20"></div>
 </main>
 
-<!-- Overlays -->
 <div id="imgModal" onclick="this.style.display='none'">
     <img id="modalImg" src="">
 </div>
 
-<div id="toast" class="copy-toast">Đã sao chép vào bộ nhớ tạm</div>
+<div id="toast" class="copy-toast"></div>
 
 <script>
 /* ================= CONFIGURATION ================= */
 const SHEET_ID = "14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A";
 const GID = "61368668";
-const APP_NAME = "HOÀNG SƠN: 0901 026 345";
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
 
 const $ = id => document.getElementById(id);
-let DATA = [];
+let ALL_DATA = [];
 
 /* ================= UTILS ================= */
 function driveToImage(url) {
     if (!url) return "";
-    let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w2000` : "";
+    const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1000` : ""; 
+}
+
+function parseImages(rowCells) {
+    let rawLinks = [];
+    [7, 8, 9].forEach(idx => {
+        const cellValue = rowCells[idx]?.v;
+        if (cellValue) {
+            const links = String(cellValue).split(/[\s,\n]+/).filter(l => l.includes('drive.google.com'));
+            rawLinks = [...rawLinks, ...links];
+        }
+    });
+    return {
+        display: [...new Set(rawLinks)].map(driveToImage).filter(Boolean),
+        raw: [...new Set(rawLinks)]
+    };
 }
 
 function showToast(msg) {
     const t = $("toast");
     t.innerText = msg;
     t.style.display = "block";
-    setTimeout(() => { t.style.display = "none"; }, 2000);
+    setTimeout(() => { t.style.display = "none"; }, 2500);
 }
 
-function copyToClipboard(text) {
+function copyToClipboard(text, msg = "✅ Đã copy!") {
     const dummy = document.createElement("textarea");
     document.body.appendChild(dummy);
     dummy.value = text;
     dummy.select();
-    document.execCommand("copy");
+    document.execCommand('copy');
     document.body.removeChild(dummy);
-    showToast("Đã copy nội dung bài đăng!");
+    showToast(msg);
 }
 
-/* ================= POST TEMPLATE GENERATOR ================= */
-function generatePost(item) {
-    // Template theo yêu cầu: CG - GIÁ - Cọc - Địa chỉ - Gạch ngang - Nội dung - Liên hệ
-    const template = `CG - GIÁ: ${item.price}
-Cọc: ${item.deposit}
-📍 ${item.address.toUpperCase()}
--------------------
-- Kết cấu: (Cập nhật kết cấu nhà tại đây)
-- Lộ giới: (Cập nhật hẻm/đường)
-- Tiện ích: Khu vực an ninh, gần chợ, trường học.
-- Phù hợp: Ở lâu dài, kinh doanh hoặc văn phòng.
--------------------
-📞 IB: 0901 026 345 Hoàng Sơn (Call/Zalo)`;
-    
-    copyToClipboard(template);
-}
-
-/* ================= LOAD DATA ================= */
+/* ================= DATA CORE ================= */
 async function loadData() {
     try {
         const res = await fetch(URL);
@@ -112,109 +119,121 @@ async function loadData() {
         const json = JSON.parse(text.substring(47).slice(0, -2));
         const rows = json.table.rows;
 
-        DATA = rows.map(r => {
+        ALL_DATA = rows.map(r => {
             const c = r.c;
-            const images = [
-                driveToImage(c?.[7]?.v),
-                driveToImage(c?.[8]?.v),
-                driveToImage(c?.[9]?.v)
-            ].filter(Boolean);
-
+            const imgData = parseImages(c);
             return {
-                owner: c?.[0]?.v || "N/A",
-                phone: c?.[1]?.v || "",
-                address: c?.[2]?.v || "Chưa có địa chỉ",
-                price: c?.[3]?.v || "Thỏa thuận",
-                deposit: c?.[4]?.v || "Thỏa thuận",
-                commission: c?.[5]?.v || "N/A",
-                images: images
+                owner: String(c?.[0]?.v || "").trim(),
+                phone: String(c?.[1]?.v || "").trim(),
+                address: String(c?.[2]?.v || "Chưa có địa chỉ").trim(),
+                price: String(c?.[3]?.v || "Thỏa thuận").trim(),
+                deposit: String(c?.[4]?.v || "Thỏa thuận").trim(),
+                commission: String(c?.[5]?.v || "N/A").trim(),
+                detailLink: String(c?.[6]?.v || "").trim(),
+                images: imgData.display,
+                rawImgLinks: imgData.raw
             };
         });
 
         $("loading").style.display = "none";
-        render(DATA);
+        render(ALL_DATA);
     } catch (err) {
-        $("loading").innerHTML = `<p class="text-red-500 italic">Lỗi kết nối bảng tính. Vui lòng kiểm tra quyền chia sẻ.</p>`;
+        console.error(err);
+        $("loading").innerHTML = `<p class="text-red-500 font-bold">❌ Lỗi kết nối dữ liệu.</p>`;
     }
 }
 
-/* ================= SEARCH ================= */
-$("search").oninput = function() {
-    const k = this.value.toLowerCase();
-    const filtered = DATA.filter(i => 
-        (i.address + i.phone + i.price + i.owner).toLowerCase().includes(k)
-    );
-    render(filtered);
-};
+function performSearch() {
+    const keyword = $("search").value.toLowerCase().trim();
+    $("list").innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse">Đang tìm kiếm...</div>`;
+    
+    setTimeout(() => {
+        const filtered = ALL_DATA.filter(i => {
+            const searchStr = `${i.address} ${i.phone} ${i.price} ${i.owner}`.toLowerCase();
+            return searchStr.includes(keyword);
+        });
+        render(filtered);
+    }, 100);
+}
 
-/* ================= RENDER ================= */
+$("search").addEventListener("keypress", (e) => { if (e.key === "Enter") performSearch(); });
+$("searchBtn").addEventListener("click", performSearch);
+
 function render(arr) {
     const box = $("list");
     $("count").innerText = `${arr.length} căn`;
-    box.innerHTML = "";
-
+    
     if(arr.length === 0) {
-        box.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Không tìm thấy dữ liệu phù hợp</div>`;
+        box.innerHTML = `<div class="text-center py-20 text-gray-400">Không tìm thấy kết quả</div>`;
         return;
     }
 
-    arr.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "card bg-white p-5 shadow-sm border border-gray-100 space-y-4";
+    const fragment = document.createDocumentFragment();
+
+    arr.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "card bg-white shadow-sm border border-gray-100 space-y-0";
         
-        card.innerHTML = `
-            <!-- Image Gallery -->
-            ${item.images.length ? `
-            <div class="grid grid-cols-3 gap-2">
+        div.innerHTML = `
+            <div class="image-grid p-2 pb-0">
                 ${item.images.map(img => `
                     <div class="thumb" onclick="openImg('${img}')" style="background-image:url('${img}')"></div>
                 `).join("")}
             </div>
-            ` : ''}
 
-            <!-- Info -->
-            <div class="space-y-1">
-                <div class="flex justify-between items-start gap-2">
-                    <h3 class="font-bold text-gray-900 leading-tight flex-1">📍 ${item.address}</h3>
-                    <span class="text-indigo-600 font-extrabold text-lg whitespace-nowrap">${item.price}</span>
+            <div class="p-4 space-y-4">
+                <div class="space-y-1">
+                    <div class="flex justify-between items-start gap-3">
+                        <h3 class="font-bold text-gray-900 leading-tight flex-1 text-sm">📍 ${item.address}</h3>
+                        <span class="text-indigo-600 font-extrabold text-base whitespace-nowrap">${item.price}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <span class="badge bg-amber-50 text-amber-700">Cọc: ${item.deposit}</span>
+                        <span class="badge bg-emerald-50 text-emerald-700">HH: ${item.commission}</span>
+                    </div>
                 </div>
-                <div class="flex gap-2 pt-1">
-                    <span class="badge bg-amber-50 text-amber-700">Cọc: ${item.deposit}</span>
-                    <span class="badge bg-emerald-50 text-emerald-700">HH: ${item.commission}</span>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="btn-detail bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-[10px] border border-indigo-100 uppercase flex items-center justify-center gap-1">
+                        📂 Chi tiết link
+                    </button>
+                    <button class="btn-copy-imgs bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-[10px] border border-indigo-100 uppercase flex items-center justify-center gap-1">
+                        🖼️ Link ảnh
+                    </button>
                 </div>
-            </div>
 
-            <hr class="border-gray-50">
-
-            <!-- Actions -->
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="generatePost(${JSON.stringify(item).replace(/"/g, '&quot;')})" 
-                        class="bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-indigo-100 active:bg-indigo-100">
-                    📝 COPY MẪU ĐĂNG
+                <button class="btn-copy-phone w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 uppercase shadow-sm">
+                    📋 Số chủ: ${item.phone}
                 </button>
-                <a href="tel:${item.phone}" 
-                   class="bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:bg-emerald-700 shadow-sm shadow-emerald-200">
-                    📞 GỌI CHỦ NHÀ
-                </a>
-            </div>
 
-            <div class="flex justify-between items-center text-[11px] text-gray-400 font-medium px-1">
-                <span>👤 CHỦ: ${item.owner}</span>
-                <span class="cursor-pointer underline" onclick="copyRawPhone('${item.phone}')">SĐT: ${item.phone}</span>
+                <div class="flex justify-between items-center text-[10px] text-gray-400 font-semibold uppercase tracking-wider border-t pt-3">
+                    <span>👤 Chủ: ${item.owner}</span>
+                </div>
             </div>
         `;
-        box.appendChild(card);
-    });
-}
 
-function copyRawPhone(p) {
-    const dummy = document.createElement("textarea");
-    document.body.appendChild(dummy);
-    dummy.value = p;
-    dummy.select();
-    document.execCommand("copy");
-    document.body.removeChild(dummy);
-    showToast("Đã copy SĐT chủ nhà");
+        div.querySelector('.btn-detail').onclick = () => {
+            if(item.detailLink && item.detailLink !== "") window.open(item.detailLink, '_blank');
+            else showToast("Chưa có link chi tiết");
+        };
+
+        div.querySelector('.btn-copy-imgs').onclick = () => {
+            if(item.rawImgLinks.length > 0) {
+                copyToClipboard(item.rawImgLinks.join('\n'), "✅ Đã copy link ảnh!");
+            } else {
+                showToast("Không có link ảnh");
+            }
+        };
+
+        div.querySelector('.btn-copy-phone').onclick = () => {
+            copyToClipboard(item.phone, "✅ Đã copy số chủ!");
+        };
+
+        fragment.appendChild(div);
+    });
+
+    box.innerHTML = "";
+    box.appendChild(fragment);
 }
 
 function openImg(src) {
@@ -222,7 +241,7 @@ function openImg(src) {
     $("imgModal").style.display = "flex";
 }
 
-window.onload = loadData;
+window.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>
 </html>
