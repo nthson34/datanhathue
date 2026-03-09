@@ -1,311 +1,228 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-
-<title>DỮ LIỆU NHÀ THUÊ</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-
-body{
-font-family:Inter,sans-serif;
-background:#f1f5f9;
-}
-
-.card{
-border-radius:16px;
-}
-
-.badge{
-font-size:12px;
-padding:4px 10px;
-border-radius:999px;
-}
-
-.thumb{
-height:130px;
-border-radius:12px;
-background-size:cover;
-background-position:center;
-cursor:pointer;
-}
-
-#imgModal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.9);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:50;
-}
-
-#modalImg{
-max-width:100vw;
-max-height:100vh;
-object-fit:contain;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>DỮ LIỆU NHÀ THUÊ - HOÀNG SƠN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .card { border-radius: 20px; transition: transform 0.2s; }
+        .card:active { transform: scale(0.98); }
+        .badge { font-size: 11px; padding: 4px 12px; border-radius: 999px; font-weight: 600; }
+        .thumb { height: 140px; border-radius: 12px; background-size: cover; background-position: center; cursor: pointer; position: relative; }
+        .thumb::after { content: '🔍'; position: absolute; bottom: 8px; right: 8px; background: rgba(255,255,255,0.8); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        #imgModal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        #modalImg { max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+        .copy-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; display: none; z-index: 200; font-size: 14px; }
+    </style>
 </head>
-
 <body>
 
-<header class="bg-indigo-700 text-white text-center py-4 font-bold text-xl">
-DỮ LIỆU NHÀ THUÊ
+<header class="bg-indigo-700 text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="font-extrabold text-xl tracking-tight">DỮ LIỆU NHÀ THUÊ</h1>
+        <div id="count" class="bg-indigo-800 px-3 py-1 rounded-full text-xs font-medium">0 căn</div>
+    </div>
 </header>
 
-<main class="max-w-3xl mx-auto p-3 space-y-4">
+<main class="max-w-3xl mx-auto p-4 space-y-4">
+    <!-- Search Bar -->
+    <div class="relative group">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+        <input id="search" type="text" 
+               placeholder="Tìm địa chỉ, giá, hoặc ghi chú..." 
+               class="w-full pl-10 pr-4 py-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none transition-all">
+    </div>
 
-<input id="search"
-placeholder="🔍 Tìm địa chỉ / SĐT / giá"
-class="w-full p-3 rounded-xl border">
+    <!-- Loading State -->
+    <div id="loading" class="flex flex-col items-center py-20 space-y-4 text-gray-400">
+        <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm font-medium">Đang đồng bộ dữ liệu...</p>
+    </div>
 
-<div id="loading"
-class="text-center py-8">
-Đang tải dữ liệu...
-</div>
-
-<div id="list" class="space-y-4"></div>
-
+    <!-- List -->
+    <div id="list" class="space-y-5 pb-20"></div>
 </main>
 
-
-<div id="imgModal">
-<img id="modalImg">
+<!-- Overlays -->
+<div id="imgModal" onclick="this.style.display='none'">
+    <img id="modalImg" src="">
 </div>
 
+<div id="toast" class="copy-toast">Đã sao chép vào bộ nhớ tạm</div>
 
 <script>
+/* ================= CONFIGURATION ================= */
+const SHEET_ID = "14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A";
+const GID = "61368668";
+const APP_NAME = "HOÀNG SƠN: 0901 026 345";
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
 
-/* ================= CONFIG ================= */
+const $ = id => document.getElementById(id);
+let DATA = [];
 
-const SHEET_ID="14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A"
-const GID="61368668"
-
-const URL=
-`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`
-
-const $=id=>document.getElementById(id)
-
-let DATA=[]
-let DISPLAY_DATA=[]
-
-
-/* ================= DRIVE IMAGE ================= */
-
-function driveToImage(url){
-
-if(!url) return ""
-
-let m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)
-||url.match(/id=([a-zA-Z0-9_-]+)/)
-
-return m
-?`https://lh3.googleusercontent.com/d/${m[1]}=w2000`
-:""
-
+/* ================= UTILS ================= */
+function driveToImage(url) {
+    if (!url) return "";
+    let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w2000` : "";
 }
 
+function showToast(msg) {
+    const t = $("toast");
+    t.innerText = msg;
+    t.style.display = "block";
+    setTimeout(() => { t.style.display = "none"; }, 2000);
+}
+
+function copyToClipboard(text) {
+    const dummy = document.createElement("textarea");
+    document.body.appendChild(dummy);
+    dummy.value = text;
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
+    showToast("Đã copy nội dung bài đăng!");
+}
+
+/* ================= POST TEMPLATE GENERATOR ================= */
+function generatePost(item) {
+    // Template theo yêu cầu: CG - GIÁ - Cọc - Địa chỉ - Gạch ngang - Nội dung - Liên hệ
+    const template = `CG - GIÁ: ${item.price}
+Cọc: ${item.deposit}
+📍 ${item.address.toUpperCase()}
+-------------------
+- Kết cấu: (Cập nhật kết cấu nhà tại đây)
+- Lộ giới: (Cập nhật hẻm/đường)
+- Tiện ích: Khu vực an ninh, gần chợ, trường học.
+- Phù hợp: Ở lâu dài, kinh doanh hoặc văn phòng.
+-------------------
+📞 IB: 0901 026 345 Hoàng Sơn (Call/Zalo)`;
+    
+    copyToClipboard(template);
+}
 
 /* ================= LOAD DATA ================= */
+async function loadData() {
+    try {
+        const res = await fetch(URL);
+        const text = await res.text();
+        const json = JSON.parse(text.substring(47).slice(0, -2));
+        const rows = json.table.rows;
 
-async function loadData(){
+        DATA = rows.map(r => {
+            const c = r.c;
+            const images = [
+                driveToImage(c?.[7]?.v),
+                driveToImage(c?.[8]?.v),
+                driveToImage(c?.[9]?.v)
+            ].filter(Boolean);
 
-try{
+            return {
+                owner: c?.[0]?.v || "N/A",
+                phone: c?.[1]?.v || "",
+                address: c?.[2]?.v || "Chưa có địa chỉ",
+                price: c?.[3]?.v || "Thỏa thuận",
+                deposit: c?.[4]?.v || "Thỏa thuận",
+                commission: c?.[5]?.v || "N/A",
+                images: images
+            };
+        });
 
-const res=await fetch(URL)
-
-const text=await res.text()
-
-const json=JSON.parse(
-text.substring(47).slice(0,-2)
-)
-
-const rows=json.table.rows
-
-
-DATA=rows.map(r=>{
-
-const c=r.c
-
-const images=[
-driveToImage(c?.[7]?.v),
-driveToImage(c?.[8]?.v),
-driveToImage(c?.[9]?.v)
-].filter(Boolean)
-
-return{
-
-owner:c?.[0]?.v || "",
-phone:c?.[1]?.v || "",
-address:c?.[2]?.v || "",
-price:c?.[3]?.v || "",
-deposit:c?.[4]?.v || "",
-commission:c?.[5]?.v || "",
-imageLink:c?.[6]?.v || "",
-images
-
+        $("loading").style.display = "none";
+        render(DATA);
+    } catch (err) {
+        $("loading").innerHTML = `<p class="text-red-500 italic">Lỗi kết nối bảng tính. Vui lòng kiểm tra quyền chia sẻ.</p>`;
+    }
 }
-
-})
-
-
-DISPLAY_DATA=[...DATA]
-
-$("loading").style.display="none"
-
-render(DISPLAY_DATA)
-
-}catch(err){
-
-console.error(err)
-
-$("loading").innerText="Không tải được dữ liệu"
-
-}
-
-}
-
 
 /* ================= SEARCH ================= */
-
-$("search").oninput=function(){
-
-const k=this.value.toLowerCase()
-
-DISPLAY_DATA=DATA.filter(i=>
-
-(i.address+i.phone+i.price+i.deposit+i.commission)
-
-.toLowerCase()
-
-.includes(k)
-
-)
-
-render(DISPLAY_DATA)
-
-}
-
-
-/* ================= COPY PHONE ================= */
-
-function copyPhone(phone){
-
-navigator.clipboard.writeText(phone)
-
-alert("Đã copy: "+phone)
-
-}
-
+$("search").oninput = function() {
+    const k = this.value.toLowerCase();
+    const filtered = DATA.filter(i => 
+        (i.address + i.phone + i.price + i.owner).toLowerCase().includes(k)
+    );
+    render(filtered);
+};
 
 /* ================= RENDER ================= */
+function render(arr) {
+    const box = $("list");
+    $("count").innerText = `${arr.length} căn`;
+    box.innerHTML = "";
 
-function render(arr){
+    if(arr.length === 0) {
+        box.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Không tìm thấy dữ liệu phù hợp</div>`;
+        return;
+    }
 
-const box=$("list")
+    arr.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "card bg-white p-5 shadow-sm border border-gray-100 space-y-4";
+        
+        card.innerHTML = `
+            <!-- Image Gallery -->
+            ${item.images.length ? `
+            <div class="grid grid-cols-3 gap-2">
+                ${item.images.map(img => `
+                    <div class="thumb" onclick="openImg('${img}')" style="background-image:url('${img}')"></div>
+                `).join("")}
+            </div>
+            ` : ''}
 
-box.innerHTML=""
+            <!-- Info -->
+            <div class="space-y-1">
+                <div class="flex justify-between items-start gap-2">
+                    <h3 class="font-bold text-gray-900 leading-tight flex-1">📍 ${item.address}</h3>
+                    <span class="text-indigo-600 font-extrabold text-lg whitespace-nowrap">${item.price}</span>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <span class="badge bg-amber-50 text-amber-700">Cọc: ${item.deposit}</span>
+                    <span class="badge bg-emerald-50 text-emerald-700">HH: ${item.commission}</span>
+                </div>
+            </div>
 
-arr.forEach((i,ci)=>{
+            <hr class="border-gray-50">
 
-box.innerHTML+=`
+            <!-- Actions -->
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="generatePost(${JSON.stringify(item).replace(/"/g, '&quot;')})" 
+                        class="bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-indigo-100 active:bg-indigo-100">
+                    📝 COPY MẪU ĐĂNG
+                </button>
+                <a href="tel:${item.phone}" 
+                   class="bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:bg-emerald-700 shadow-sm shadow-emerald-200">
+                    📞 GỌI CHỦ NHÀ
+                </a>
+            </div>
 
-<div class="card bg-white p-4 shadow space-y-3">
-
-${i.images.length?`
-
-<div class="grid grid-cols-3 gap-2">
-
-${i.images.map(img=>`
-
-<div class="thumb"
-onclick="openImg('${img}')"
-style="background-image:url('${img}')">
-</div>
-
-`).join("")}
-
-</div>
-
-`:""}
-
-
-<div class="font-bold text-indigo-700">
-📍 ${i.address}
-</div>
-
-<div class="text-red-600 font-bold">
-💰 ${i.price}
-</div>
-
-<div class="flex gap-2">
-
-<span class="badge bg-gray-100">
-Cọc ${i.deposit}
-</span>
-
-<span class="badge bg-green-100">
-HH ${i.commission}
-</span>
-
-</div>
-
-<div class="flex gap-2">
-
-<a href="tel:${i.phone}"
-class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center">
-📞 ${i.phone}
-</a>
-
-<button onclick="copyPhone('${i.phone}')"
-class="bg-gray-200 px-3 rounded-xl">
-📋
-</button>
-
-</div>
-
-<div class="text-sm text-gray-500">
-👤 ${i.owner}
-</div>
-
-</div>
-
-`
-
-})
-
+            <div class="flex justify-between items-center text-[11px] text-gray-400 font-medium px-1">
+                <span>👤 CHỦ: ${item.owner}</span>
+                <span class="cursor-pointer underline" onclick="copyRawPhone('${item.phone}')">SĐT: ${item.phone}</span>
+            </div>
+        `;
+        box.appendChild(card);
+    });
 }
 
-
-/* ================= IMAGE POPUP ================= */
-
-function openImg(src){
-
-$("modalImg").src=src
-
-$("imgModal").style.display="flex"
-
+function copyRawPhone(p) {
+    const dummy = document.createElement("textarea");
+    document.body.appendChild(dummy);
+    dummy.value = p;
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
+    showToast("Đã copy SĐT chủ nhà");
 }
 
-$("imgModal").onclick=function(){
-
-this.style.display="none"
-
+function openImg(src) {
+    $("modalImg").src = src;
+    $("imgModal").style.display = "flex";
 }
 
-
-/* ================= START ================= */
-
-loadData()
-
+window.onload = loadData;
 </script>
-
 </body>
 </html>
