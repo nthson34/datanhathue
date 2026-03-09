@@ -13,105 +13,137 @@
             overflow-x: hidden; 
             margin: 0; 
             padding: 0;
-            background: #f8fafc;
+            background: #f1f5f9;
             font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .card { 
             border-radius: 20px; 
             overflow: hidden; 
             width: 100%;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .badge { 
             font-size: 10px; 
             padding: 3px 10px; 
-            border-radius: 999px; 
+            border-radius: 10px; 
             font-weight: 600; 
             white-space: nowrap;
         }
         
-        /* Grid ảnh tối ưu mobile */
-        .image-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 4px; 
+        /* Container chứa thanh cuộn ngang */
+        .image-scroll-wrapper {
             width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            gap: 10px;
+            padding: 4px 0 12px 0; /* Padding dưới để tạo khoảng cách với thanh cuộn */
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
         }
-        .image-grid .thumb:first-child:nth-last-child(1) { grid-column: span 3; height: 180px; }
-        .image-grid .thumb:first-child:nth-last-child(2), 
-        .image-grid .thumb:first-child:nth-last-child(2) ~ .thumb { grid-column: span 1; height: 120px; }
-        
+
+        /* Tùy chỉnh thanh cuộn (scrollbar) cho gọn đẹp */
+        .image-scroll-wrapper::-webkit-scrollbar {
+            height: 4px;
+        }
+        .image-scroll-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .image-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .thumb-container {
+            flex: 0 0 75%; /* Mỗi ảnh chiếm 75% chiều ngang để thấy một phần ảnh tiếp theo */
+            scroll-snap-align: center;
+            border-radius: 14px;
+            overflow: hidden;
+            background-color: #f8fafc;
+            border: 1px solid rgba(0,0,0,0.03);
+            aspect-ratio: 4 / 3;
+            position: relative;
+        }
+
+        /* Nếu chỉ có 1 ảnh thì hiện full ngang */
+        .image-scroll-wrapper .thumb-container:only-child {
+            flex: 0 0 100%;
+        }
+
         .thumb { 
-            height: 100px; 
-            border-radius: 12px; 
-            background-size: cover; 
-            background-position: center; 
-            background-color: #e2e8f0; 
+            width: 100%;
+            height: 100%;
+            background-size: cover; /* Chuyển sang cover để ảnh trông lấp đầy khung hình hơn, vẫn giữ tỉ lệ */
+            background-repeat: no-repeat;
+            background-position: center;
             transition: opacity 0.3s ease-in;
         }
-        
-        .thumb.loading { opacity: 0.5; }
+
+        .thumb.loading { opacity: 0.3; }
         .thumb.loaded { opacity: 1; }
 
         #imgModal { 
             position: fixed; 
             inset: 0; 
-            background: rgba(0,0,0,0.95); 
+            background: rgba(0,0,0,0.98); 
             display: none; 
             align-items: center; 
             justify-content: center; 
             z-index: 100; 
             padding: 10px; 
         }
-        #modalImg { max-width: 100%; max-height: 85vh; border-radius: 8px; object-fit: contain; }
+        #modalImg { max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain; }
         
         .copy-toast { 
             position: fixed; 
-            bottom: 30px; 
+            bottom: 40px; 
             left: 50%; 
             transform: translateX(-50%); 
             background: #1e293b; 
             color: white; 
-            padding: 8px 16px; 
-            border-radius: 30px; 
+            padding: 10px 20px; 
+            border-radius: 999px; 
             display: none; 
             z-index: 200; 
             font-size: 13px; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); 
+            font-weight: 600;
         }
         
         .drive-search-bar { 
-            background: #f0f4ff; 
-            border: 1px dashed #6366f1; 
+            background: #fff; 
+            border: 1.5px dashed #6366f1; 
             border-radius: 16px; 
         }
 
-        /* Tối ưu kích thước chữ cho mobile */
-        h3 { font-size: 13px !important; }
-        .price-text { font-size: 15px !important; }
+        .address-text { font-size: 13px !important; font-weight: 700; }
+        .price-text { font-size: 15px !important; color: #4f46e5; font-weight: 800; }
+        .btn-small { font-size: 10px !important; padding: 10px 4px !important; }
     </style>
 </head>
 <body>
 
-<header class="bg-indigo-700 text-white sticky top-0 z-40 shadow-sm">
+<header class="bg-indigo-600 text-white sticky top-0 z-40 shadow-md">
     <div class="max-w-xl mx-auto px-4 py-4 flex justify-between items-center">
         <h1 class="font-extrabold text-lg tracking-tight uppercase">Dữ Liệu Nhà Thuê</h1>
-        <div id="count" class="bg-indigo-800 px-3 py-1 rounded-full text-[10px] font-bold">...</div>
+        <div id="count" class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold">...</div>
     </div>
 </header>
 
 <main class="max-w-xl mx-auto p-3 space-y-4">
-    <!-- Search Bar -->
     <div class="space-y-3">
         <div class="flex items-center gap-2">
             <div class="relative flex-1">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-sm">🔍</span>
                 <input id="search" type="text" 
-                       placeholder="Tìm địa chỉ, giá..." 
-                       class="w-full pl-10 pr-4 py-3 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none text-sm bg-white">
+                       placeholder="Tìm nhanh địa chỉ..." 
+                       class="w-full pl-9 pr-4 py-3 rounded-xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none text-sm bg-white">
             </div>
-            <button id="searchBtn" class="bg-indigo-600 text-white p-3 rounded-2xl shadow-md">
+            <button id="searchBtn" class="bg-indigo-600 text-white p-3 rounded-xl shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -119,19 +151,17 @@
         </div>
         
         <div id="driveShortcut" class="drive-search-bar p-3 flex items-center justify-between hidden">
-            <span class="text-[10px] font-bold text-indigo-700 uppercase">Tìm sâu hơn trong Drive?</span>
-            <button id="openDriveSearch" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase">
-                Quét Drive
-            </button>
+            <span class="text-[10px] font-bold text-indigo-700 uppercase">Tìm thêm trong Drive?</span>
+            <button id="openDriveSearch" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase">Quét</button>
         </div>
     </div>
 
     <div id="loading" class="flex flex-col items-center py-20 space-y-3 text-gray-400">
         <div class="w-6 h-6 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-xs font-medium">Đang đồng bộ dữ liệu...</p>
+        <p class="text-xs italic">Đang tải dữ liệu...</p>
     </div>
 
-    <div id="list" class="space-y-5 pb-10"></div>
+    <div id="list" class="space-y-4 pb-10"></div>
 </main>
 
 <div id="imgModal" onclick="this.style.display='none'">
@@ -152,6 +182,7 @@ let ALL_DATA = [];
 function driveToThumbnail(url) {
     if (!url) return "";
     const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    // Giảm nhẹ chất lượng để tải cực nhanh (w400)
     return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w400` : ""; 
 }
 
@@ -166,7 +197,7 @@ function parseImages(rowCells) {
     [7, 8, 9].forEach(idx => {
         const cellValue = rowCells[idx]?.v;
         if (cellValue) {
-            const links = String(cellValue).split(/[\s,\n]+/).filter(l => l.includes('drive.google.com'));
+            const links = String(cellValue).split(/[\s,\n]+/).map(l => l.trim()).filter(l => l.includes('drive.google.com'));
             rawLinks = [...rawLinks, ...links];
         }
     });
@@ -182,7 +213,7 @@ function showToast(msg) {
     const t = $("toast");
     t.innerText = msg;
     t.style.display = "block";
-    setTimeout(() => { t.style.display = "none"; }, 2500);
+    setTimeout(() => { t.style.display = "none"; }, 2000);
 }
 
 function copyToClipboard(text, msg = "✅ Đã copy!") {
@@ -223,7 +254,7 @@ async function loadData() {
         render(ALL_DATA);
     } catch (err) {
         console.error(err);
-        $("loading").innerHTML = `<p class="text-red-500 font-bold text-xs">❌ Lỗi kết nối dữ liệu.</p>`;
+        $("loading").innerHTML = `<p class="text-red-500 font-bold text-xs">❌ Lỗi kết nối dữ liệu</p>`;
     }
 }
 
@@ -232,7 +263,7 @@ function performSearch() {
     if(keyword !== "") $("driveShortcut").classList.remove("hidden");
     else $("driveShortcut").classList.add("hidden");
     
-    $("list").innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse text-xs">Đang tìm...</div>`;
+    $("list").innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse text-xs">Đang tìm kiếm...</div>`;
     
     setTimeout(() => {
         const filtered = ALL_DATA.filter(i => {
@@ -240,15 +271,12 @@ function performSearch() {
             return searchStr.includes(keyword);
         });
         render(filtered);
-    }, 100);
+    }, 50);
 }
 
 $("openDriveSearch").onclick = () => {
     const keyword = $("search").value.trim();
-    if(keyword) {
-        const driveSearchUrl = `https://drive.google.com/drive/u/0/search?q=parent:${DRIVE_FOLDER_ID}%20${encodeURIComponent(keyword)}`;
-        window.open(driveSearchUrl, '_blank');
-    }
+    if(keyword) window.open(`https://drive.google.com/drive/u/0/search?q=parent:${DRIVE_FOLDER_ID}%20${encodeURIComponent(keyword)}`, '_blank');
 };
 
 $("search").addEventListener("keypress", (e) => { if (e.key === "Enter") performSearch(); });
@@ -259,7 +287,7 @@ function render(arr) {
     $("count").innerText = `${arr.length} căn`;
     
     if(arr.length === 0) {
-        box.innerHTML = `<div class="text-center py-20 text-gray-400 text-xs">Không có kết quả</div>`;
+        box.innerHTML = `<div class="text-center py-20 text-gray-400 text-xs">Không tìm thấy căn phù hợp</div>`;
         return;
     }
 
@@ -267,44 +295,55 @@ function render(arr) {
 
     arr.forEach((item) => {
         const div = document.createElement("div");
-        div.className = "card bg-white shadow-sm ring-1 ring-gray-100 p-2 space-y-3";
+        div.className = "card p-3 space-y-3";
         
-        div.innerHTML = `
-            <div class="image-grid">
-                ${item.images.slice(0,3).map((img, idx) => `
-                    <div class="thumb loading" 
-                         data-src="${img}" 
-                         data-full="${item.fullImages[idx]}"
-                         onclick="openImg(this.getAttribute('data-full'))">
-                    </div>
-                `).join("")}
-            </div>
+        let gridHtml = '';
+        if(item.images.length > 0) {
+            gridHtml = `
+                <div class="image-scroll-wrapper">
+                    ${item.images.map((img, idx) => `
+                        <div class="thumb-container">
+                            <div class="thumb loading" 
+                                 data-src="${img}" 
+                                 data-full="${item.fullImages[idx]}"
+                                 onclick="openImg(this.getAttribute('data-full'))">
+                            </div>
+                        </div>
+                    `).join("")}
+                </div>
+            `;
+        } else {
+            gridHtml = `<div class="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center text-gray-300 text-[10px] italic">Không có ảnh</div>`;
+        }
 
-            <div class="px-1 space-y-3">
+        div.innerHTML = `
+            ${gridHtml}
+
+            <div class="space-y-3">
                 <div class="flex justify-between items-start gap-2">
-                    <h3 class="font-bold text-gray-900 leading-tight flex-1">📍 ${item.address}</h3>
-                    <span class="price-text text-indigo-600 font-extrabold whitespace-nowrap">${item.price}</span>
+                    <h3 class="address-text text-gray-900 leading-tight flex-1">📍 ${item.address}</h3>
+                    <span class="price-text whitespace-nowrap">${item.price}</span>
                 </div>
                 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-1.5">
                     <span class="badge bg-amber-50 text-amber-700">Cọc: ${item.deposit}</span>
                     <span class="badge bg-emerald-50 text-emerald-700">HH: ${item.commission}</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <button class="btn-detail bg-indigo-50 text-indigo-700 py-2.5 rounded-xl font-bold text-[10px] uppercase flex items-center justify-center gap-1 border border-indigo-100">
+                    <button class="btn-detail btn-small bg-indigo-50 text-indigo-700 rounded-xl font-bold uppercase border border-indigo-100 flex items-center justify-center gap-1 active:bg-indigo-100">
                         📂 Folder
                     </button>
-                    <button class="btn-copy-imgs bg-indigo-50 text-indigo-700 py-2.5 rounded-xl font-bold text-[10px] uppercase flex items-center justify-center gap-1 border border-indigo-100">
+                    <button class="btn-copy-imgs btn-small bg-indigo-50 text-indigo-700 rounded-xl font-bold uppercase border border-indigo-100 flex items-center justify-center gap-1 active:bg-indigo-100">
                         🖼️ Link Ảnh
                     </button>
                 </div>
 
-                <button class="btn-copy-phone w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 uppercase active:scale-95 transition-transform">
+                <button class="btn-copy-phone w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 uppercase active:scale-[0.98] shadow-sm">
                     📋 Số chủ: ${item.phone}
                 </button>
 
-                <div class="flex items-center text-[10px] text-gray-400 font-bold uppercase tracking-wider border-t pt-2 mt-1">
+                <div class="flex items-center text-[9px] text-gray-400 font-bold uppercase border-t pt-2 mt-1">
                     <span>👤 Chủ: ${item.owner || "Trống"}</span>
                 </div>
             </div>
@@ -316,11 +355,11 @@ function render(arr) {
         };
 
         div.querySelector('.btn-copy-imgs').onclick = () => {
-            if(item.rawImgLinks.length > 0) copyToClipboard(item.rawImgLinks.join('\n'), "✅ Link ảnh đã copy!");
-            else showToast("Không có link ảnh");
+            if(item.rawImgLinks.length > 0) copyToClipboard(item.rawImgLinks.join('\n'), "✅ Copy link ảnh!");
+            else showToast("Không có ảnh để copy");
         };
 
-        div.querySelector('.btn-copy-phone').onclick = () => copyToClipboard(item.phone, "✅ Số chủ đã copy!");
+        div.querySelector('.btn-copy-phone').onclick = () => copyToClipboard(item.phone, "✅ Copy số điện thoại!");
 
         fragment.appendChild(div);
     });
@@ -347,7 +386,7 @@ function initLazyLoading() {
                 observer.unobserve(el);
             }
         });
-    }, { rootMargin: '200px' });
+    }, { rootMargin: '400px' });
     thumbs.forEach(t => observer.observe(t));
 }
 
