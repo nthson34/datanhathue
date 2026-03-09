@@ -17,11 +17,26 @@
         .image-grid .thumb:first-child:nth-last-child(2), 
         .image-grid .thumb:first-child:nth-last-child(2) ~ .thumb { grid-column: span 1; height: 150px; }
         
-        .thumb { height: 110px; border-radius: 8px; background-size: cover; background-position: center; cursor: pointer; position: relative; background-color: #f1f5f9; border: 1px solid #f1f5f9; }
+        .thumb { 
+            height: 110px; 
+            border-radius: 8px; 
+            background-size: cover; 
+            background-position: center; 
+            cursor: pointer; 
+            position: relative; 
+            background-color: #e2e8f0; 
+            border: 1px solid #f1f5f9;
+            transition: opacity 0.3s ease-in;
+        }
         
+        .thumb.loading { opacity: 0.5; }
+        .thumb.loaded { opacity: 1; }
+
         #imgModal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; padding: 10px; }
         #modalImg { max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain; }
         .copy-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; display: none; z-index: 200; font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        
+        .drive-search-bar { background: #eef2ff; border: 1px dashed #6366f1; border-radius: 12px; }
     </style>
 </head>
 <body>
@@ -35,18 +50,33 @@
 
 <main class="max-w-3xl mx-auto p-4 space-y-4">
     <!-- Search Bar -->
-    <div class="relative flex items-center gap-2">
-        <div class="relative flex-1">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
-            <input id="search" type="text" 
-                   placeholder="Nhập địa chỉ, giá... rồi nhấn Enter" 
-                   class="w-full pl-10 pr-4 py-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none transition-all text-sm">
+    <div class="space-y-3">
+        <div class="relative flex items-center gap-2">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+                <input id="search" type="text" 
+                       placeholder="Nhập địa chỉ, giá... rồi nhấn Enter" 
+                       class="w-full pl-10 pr-4 py-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none transition-all text-sm">
+            </div>
+            <button id="searchBtn" class="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </button>
         </div>
-        <button id="searchBtn" class="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-colors shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        </button>
+        
+        <!-- Nút tìm kiếm Drive bổ sung -->
+        <div id="driveShortcut" class="drive-search-bar p-3 flex items-center justify-between hidden">
+            <div class="flex items-center gap-2 text-indigo-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 10-2 0v1a1 1 0 102 0zM13 16v-1a1 1 0 10-2 0v1a1 1 0 102 0zM16.464 14.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414z" />
+                </svg>
+                <span class="text-xs font-semibold">Bạn muốn tìm sâu hơn trong thư mục Drive?</span>
+            </div>
+            <button id="openDriveSearch" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:bg-indigo-700">
+                Quét Drive
+            </button>
+        </div>
     </div>
 
     <div id="loading" class="flex flex-col items-center py-20 space-y-4 text-gray-400">
@@ -67,16 +97,23 @@
 /* ================= CONFIGURATION ================= */
 const SHEET_ID = "14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A";
 const GID = "61368668";
+const DRIVE_FOLDER_ID = "1mp7r0mKo_C_PvxxkKJDaRYO3xKLyIMDx";
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
 
 const $ = id => document.getElementById(id);
 let ALL_DATA = [];
 
 /* ================= UTILS ================= */
-function driveToImage(url) {
+function driveToThumbnail(url) {
     if (!url) return "";
     const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1000` : ""; 
+    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w400` : ""; 
+}
+
+function driveToFull(url) {
+    if (!url) return "";
+    const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1600` : ""; 
 }
 
 function parseImages(rowCells) {
@@ -88,9 +125,11 @@ function parseImages(rowCells) {
             rawLinks = [...rawLinks, ...links];
         }
     });
+    const uniqueRaw = [...new Set(rawLinks)];
     return {
-        display: [...new Set(rawLinks)].map(driveToImage).filter(Boolean),
-        raw: [...new Set(rawLinks)]
+        thumbnails: uniqueRaw.map(driveToThumbnail).filter(Boolean),
+        fulls: uniqueRaw.map(driveToFull).filter(Boolean),
+        raw: uniqueRaw
     };
 }
 
@@ -130,7 +169,8 @@ async function loadData() {
                 deposit: String(c?.[4]?.v || "Thỏa thuận").trim(),
                 commission: String(c?.[5]?.v || "N/A").trim(),
                 detailLink: String(c?.[6]?.v || "").trim(),
-                images: imgData.display,
+                images: imgData.thumbnails,
+                fullImages: imgData.fulls,
                 rawImgLinks: imgData.raw
             };
         });
@@ -145,6 +185,12 @@ async function loadData() {
 
 function performSearch() {
     const keyword = $("search").value.toLowerCase().trim();
+    if(keyword !== "") {
+        $("driveShortcut").classList.remove("hidden");
+    } else {
+        $("driveShortcut").classList.add("hidden");
+    }
+    
     $("list").innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse">Đang tìm kiếm...</div>`;
     
     setTimeout(() => {
@@ -155,6 +201,16 @@ function performSearch() {
         render(filtered);
     }, 100);
 }
+
+// Xử lý nút tìm kiếm sâu trong Drive
+$("openDriveSearch").onclick = () => {
+    const keyword = $("search").value.trim();
+    if(keyword) {
+        // Tạo link search trực tiếp trong thư mục Drive đã cho
+        const driveSearchUrl = `https://drive.google.com/drive/u/0/search?q=parent:${DRIVE_FOLDER_ID}%20${encodeURIComponent(keyword)}`;
+        window.open(driveSearchUrl, '_blank');
+    }
+};
 
 $("search").addEventListener("keypress", (e) => { if (e.key === "Enter") performSearch(); });
 $("searchBtn").addEventListener("click", performSearch);
@@ -176,8 +232,12 @@ function render(arr) {
         
         div.innerHTML = `
             <div class="image-grid p-2 pb-0">
-                ${item.images.map(img => `
-                    <div class="thumb" onclick="openImg('${img}')" style="background-image:url('${img}')"></div>
+                ${item.images.map((img, idx) => `
+                    <div class="thumb loading" 
+                         data-src="${img}" 
+                         data-full="${item.fullImages[idx]}"
+                         onclick="openImg(this.getAttribute('data-full'))">
+                    </div>
                 `).join("")}
             </div>
 
@@ -195,10 +255,10 @@ function render(arr) {
 
                 <div class="grid grid-cols-2 gap-2">
                     <button class="btn-detail bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-[10px] border border-indigo-100 uppercase flex items-center justify-center gap-1">
-                        📂 Chi tiết link
+                        📂 Folder Drive
                     </button>
                     <button class="btn-copy-imgs bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-[10px] border border-indigo-100 uppercase flex items-center justify-center gap-1">
-                        🖼️ Link ảnh
+                        🖼️ Copy link ảnh
                     </button>
                 </div>
 
@@ -214,7 +274,11 @@ function render(arr) {
 
         div.querySelector('.btn-detail').onclick = () => {
             if(item.detailLink && item.detailLink !== "") window.open(item.detailLink, '_blank');
-            else showToast("Chưa có link chi tiết");
+            else {
+                // Nếu chưa có link folder riêng, mở folder chung và tìm địa chỉ
+                const folderSearch = `https://drive.google.com/drive/u/0/search?q=parent:${DRIVE_FOLDER_ID}%20${encodeURIComponent(item.address)}`;
+                window.open(folderSearch, '_blank');
+            }
         };
 
         div.querySelector('.btn-copy-imgs').onclick = () => {
@@ -234,6 +298,28 @@ function render(arr) {
 
     box.innerHTML = "";
     box.appendChild(fragment);
+    initLazyLoading();
+}
+
+function initLazyLoading() {
+    const thumbs = document.querySelectorAll('.thumb[data-src]');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const src = el.getAttribute('data-src');
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    el.style.backgroundImage = `url('${src}')`;
+                    el.classList.remove('loading');
+                    el.classList.add('loaded');
+                };
+                observer.unobserve(el);
+            }
+        });
+    }, { rootMargin: '100px' });
+    thumbs.forEach(t => observer.observe(t));
 }
 
 function openImg(src) {
