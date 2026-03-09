@@ -7,48 +7,46 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Chống tràn toàn trang */
         html, body { 
             max-width: 100vw; 
             overflow-x: hidden; 
             margin: 0; 
             padding: 0;
-            background: #f1f5f9;
+            background: #f8fafc;
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
         .card { 
-            border-radius: 20px; 
+            border-radius: 24px; 
             overflow: hidden; 
             width: 100%;
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            border: 1px solid #f1f5f9;
         }
 
         .badge { 
-            font-size: 10px; 
-            padding: 3px 10px; 
-            border-radius: 10px; 
+            font-size: 11px; 
+            padding: 4px 12px; 
+            border-radius: 12px; 
             font-weight: 600; 
             white-space: nowrap;
         }
         
-        /* Container chứa thanh cuộn ngang */
         .image-scroll-wrapper {
             width: 100%;
             overflow-x: auto;
             overflow-y: hidden;
             display: flex;
-            gap: 10px;
-            padding: 4px 0 12px 0; /* Padding dưới để tạo khoảng cách với thanh cuộn */
+            gap: 12px;
+            padding: 4px 0 16px 0;
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Tùy chỉnh thanh cuộn (scrollbar) cho gọn đẹp */
         .image-scroll-wrapper::-webkit-scrollbar {
-            height: 4px;
+            height: 5px;
         }
         .image-scroll-wrapper::-webkit-scrollbar-track {
             background: #f1f5f9;
@@ -60,17 +58,15 @@
         }
 
         .thumb-container {
-            flex: 0 0 75%; /* Mỗi ảnh chiếm 75% chiều ngang để thấy một phần ảnh tiếp theo */
+            flex: 0 0 82%; 
             scroll-snap-align: center;
-            border-radius: 14px;
+            border-radius: 16px;
             overflow: hidden;
-            background-color: #f8fafc;
-            border: 1px solid rgba(0,0,0,0.03);
+            background-color: #f1f5f9;
             aspect-ratio: 4 / 3;
             position: relative;
         }
 
-        /* Nếu chỉ có 1 ảnh thì hiện full ngang */
         .image-scroll-wrapper .thumb-container:only-child {
             flex: 0 0 100%;
         }
@@ -78,90 +74,93 @@
         .thumb { 
             width: 100%;
             height: 100%;
-            background-size: cover; /* Chuyển sang cover để ảnh trông lấp đầy khung hình hơn, vẫn giữ tỉ lệ */
+            background-size: cover; 
             background-repeat: no-repeat;
             background-position: center;
-            transition: opacity 0.3s ease-in;
         }
 
-        .thumb.loading { opacity: 0.3; }
-        .thumb.loaded { opacity: 1; }
+        .thumb.loading { background-color: #e2e8f0; }
 
         #imgModal { 
             position: fixed; 
             inset: 0; 
-            background: rgba(0,0,0,0.98); 
+            background: rgba(0,0,0,0.95); 
             display: none; 
             align-items: center; 
             justify-content: center; 
             z-index: 100; 
-            padding: 10px; 
         }
-        #modalImg { max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+        #modalImg { max-width: 95%; max-height: 90vh; border-radius: 12px; object-fit: contain; }
         
         .copy-toast { 
             position: fixed; 
-            bottom: 40px; 
+            bottom: 30px; 
             left: 50%; 
             transform: translateX(-50%); 
             background: #1e293b; 
             color: white; 
-            padding: 10px 20px; 
-            border-radius: 999px; 
+            padding: 12px 24px; 
+            border-radius: 50px; 
             display: none; 
             z-index: 200; 
-            font-size: 13px; 
-            font-weight: 600;
-        }
-        
-        .drive-search-bar { 
-            background: #fff; 
-            border: 1.5px dashed #6366f1; 
-            border-radius: 16px; 
+            font-size: 14px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
 
-        .address-text { font-size: 13px !important; font-weight: 700; }
-        .price-text { font-size: 15px !important; color: #4f46e5; font-weight: 800; }
-        .btn-small { font-size: 10px !important; padding: 10px 4px !important; }
+        .address-text { font-size: 14px !important; font-weight: 800; color: #1e293b; }
+        .price-text { font-size: 16px !important; color: #4338ca; font-weight: 800; }
     </style>
 </head>
 <body>
 
-<header class="bg-indigo-600 text-white sticky top-0 z-40 shadow-md">
-    <div class="max-w-xl mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 class="font-extrabold text-lg tracking-tight uppercase">Dữ Liệu Nhà Thuê</h1>
-        <div id="count" class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold">...</div>
+<header class="bg-indigo-600 text-white sticky top-0 z-40 shadow-lg">
+    <div class="max-w-xl mx-auto px-5 py-4 flex justify-between items-center">
+        <div>
+            <h1 class="font-black text-xl tracking-tight uppercase">Dữ Liệu Nhà Thuê</h1>
+            <p class="text-[10px] opacity-80 font-bold uppercase tracking-widest">Hoàng Sơn Land</p>
+        </div>
+        <div id="count" class="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-black">...</div>
     </div>
 </header>
 
-<main class="max-w-xl mx-auto p-3 space-y-4">
+<main class="max-w-xl mx-auto p-4 space-y-5">
+    <!-- Tìm kiếm -->
     <div class="space-y-3">
         <div class="flex items-center gap-2">
-            <div class="relative flex-1">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-sm">🔍</span>
+            <div class="relative flex-1 group">
+                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </span>
                 <input id="search" type="text" 
-                       placeholder="Tìm nhanh địa chỉ..." 
-                       class="w-full pl-9 pr-4 py-3 rounded-xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none text-sm bg-white">
+                       placeholder="Nhập địa chỉ, chủ hoặc SĐT..." 
+                       class="w-full pl-11 pr-4 py-4 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-indigo-500 shadow-sm outline-none text-base bg-white transition-all">
             </div>
-            <button id="searchBtn" class="bg-indigo-600 text-white p-3 rounded-xl shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            <button id="searchBtn" class="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-100 active:scale-90 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </button>
         </div>
         
-        <div id="driveShortcut" class="drive-search-bar p-3 flex items-center justify-between hidden">
-            <span class="text-[10px] font-bold text-indigo-700 uppercase">Tìm thêm trong Drive?</span>
-            <button id="openDriveSearch" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase">Quét</button>
+        <div id="driveShortcut" class="hidden bg-indigo-50 border-2 border-dashed border-indigo-200 p-4 rounded-2xl flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+                <span class="text-xs font-bold text-indigo-900 uppercase leading-none">Quét sâu trong Drive?</span>
+            </div>
+            <button id="openDriveSearch" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase shadow-indigo-200 shadow-lg active:scale-95 transition-transform">Quét ngay</button>
         </div>
     </div>
 
-    <div id="loading" class="flex flex-col items-center py-20 space-y-3 text-gray-400">
-        <div class="w-6 h-6 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-xs italic">Đang tải dữ liệu...</p>
+    <!-- Trạng thái loading -->
+    <div id="loading" class="flex flex-col items-center py-32 space-y-4">
+        <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <div class="text-center">
+            <p class="font-black text-gray-800 uppercase text-sm">Đang đồng bộ toàn bộ kho nhà</p>
+            <p class="text-xs text-gray-400 italic">Vui lòng đợi quét hết 2200+ dòng dữ liệu...</p>
+        </div>
     </div>
 
-    <div id="list" class="space-y-4 pb-10"></div>
+    <div id="list" class="space-y-6 pb-20"></div>
 </main>
 
 <div id="imgModal" onclick="this.style.display='none'">
@@ -174,7 +173,8 @@
 const SHEET_ID = "14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A";
 const GID = "61368668";
 const DRIVE_FOLDER_ID = "1mp7r0mKo_C_PvxxkKJDaRYO3xKLyIMDx";
-const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
+// URL lấy dữ liệu triệt để: headers=1 và tq=select * đảm bảo quét hết mọi dòng
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=select%20*%20&headers=1`;
 
 const $ = id => document.getElementById(id);
 let ALL_DATA = [];
@@ -182,14 +182,13 @@ let ALL_DATA = [];
 function driveToThumbnail(url) {
     if (!url) return "";
     const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-    // Giảm nhẹ chất lượng để tải cực nhanh (w400)
-    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w400` : ""; 
+    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w600` : ""; 
 }
 
 function driveToFull(url) {
     if (!url) return "";
     const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1200` : ""; 
+    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1600` : ""; 
 }
 
 function parseImages(rowCells) {
@@ -230,20 +229,23 @@ async function loadData() {
     try {
         const res = await fetch(URL);
         const text = await res.text();
-        const json = JSON.parse(text.substring(47).slice(0, -2));
+        const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+        const json = JSON.parse(jsonText);
         const rows = json.table.rows;
 
-        ALL_DATA = rows.map(r => {
+        // Bỏ qua dòng đầu tiên nếu là tiêu đề (rows.slice(0) hoặc rows.slice(1) tùy cấu trúc)
+        // Ở đây ta lọc r.c[2] có địa chỉ để chắc chắn lấy dòng có data
+        ALL_DATA = rows.filter(r => r.c && r.c[2] && r.c[2].v).map(r => {
             const c = r.c;
             const imgData = parseImages(c);
             return {
-                owner: String(c?.[0]?.v || "").trim(),
-                phone: String(c?.[1]?.v || "").trim(),
-                address: String(c?.[2]?.v || "Chưa có địa chỉ").trim(),
-                price: String(c?.[3]?.v || "Thỏa thuận").trim(),
-                deposit: String(c?.[4]?.v || "Thỏa thuận").trim(),
-                commission: String(c?.[5]?.v || "N/A").trim(),
-                detailLink: String(c?.[6]?.v || "").trim(),
+                owner: String(c[0]?.v || "").trim(),
+                phone: String(c[1]?.v || "").trim(),
+                address: String(c[2]?.v || "").trim(),
+                price: String(c[3]?.v || "Thỏa thuận").trim(),
+                deposit: String(c[4]?.v || "Thỏa thuận").trim(),
+                commission: String(c[5]?.v || "N/A").trim(),
+                detailLink: String(c[6]?.v || "").trim(),
                 images: imgData.thumbnails,
                 fullImages: imgData.fulls,
                 rawImgLinks: imgData.raw
@@ -254,7 +256,7 @@ async function loadData() {
         render(ALL_DATA);
     } catch (err) {
         console.error(err);
-        $("loading").innerHTML = `<p class="text-red-500 font-bold text-xs">❌ Lỗi kết nối dữ liệu</p>`;
+        $("loading").innerHTML = `<div class="p-6 bg-red-50 rounded-2xl text-red-600 text-xs font-bold text-center">Lỗi tải dữ liệu. Hãy đảm bảo File Sheet đang mở quyền truy cập.</div>`;
     }
 }
 
@@ -263,31 +265,35 @@ function performSearch() {
     if(keyword !== "") $("driveShortcut").classList.remove("hidden");
     else $("driveShortcut").classList.add("hidden");
     
-    $("list").innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse text-xs">Đang tìm kiếm...</div>`;
+    // Hiển thị trạng thái đang tìm cho danh sách lớn
+    $("list").innerHTML = `<div class="text-center py-20 text-gray-400 text-xs italic">Đang lọc danh sách...</div>`;
     
     setTimeout(() => {
         const filtered = ALL_DATA.filter(i => {
-            const searchStr = `${i.address} ${i.phone} ${i.price} ${i.owner}`.toLowerCase();
+            const searchStr = `${i.address} ${i.owner} ${i.phone}`.toLowerCase();
             return searchStr.includes(keyword);
         });
         render(filtered);
-    }, 50);
+    }, 100);
 }
+
+// Chỉnh sửa: Chỉ lọc khi bấm nút hoặc Enter
+$("searchBtn").onclick = performSearch;
+$("search").onkeypress = (e) => {
+    if (e.key === "Enter") performSearch();
+};
 
 $("openDriveSearch").onclick = () => {
     const keyword = $("search").value.trim();
     if(keyword) window.open(`https://drive.google.com/drive/u/0/search?q=parent:${DRIVE_FOLDER_ID}%20${encodeURIComponent(keyword)}`, '_blank');
 };
 
-$("search").addEventListener("keypress", (e) => { if (e.key === "Enter") performSearch(); });
-$("searchBtn").addEventListener("click", performSearch);
-
 function render(arr) {
     const box = $("list");
     $("count").innerText = `${arr.length} căn`;
     
     if(arr.length === 0) {
-        box.innerHTML = `<div class="text-center py-20 text-gray-400 text-xs">Không tìm thấy căn phù hợp</div>`;
+        box.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm font-medium">Không tìm thấy căn nhà nào</div>`;
         return;
     }
 
@@ -295,11 +301,11 @@ function render(arr) {
 
     arr.forEach((item) => {
         const div = document.createElement("div");
-        div.className = "card p-3 space-y-3";
+        div.className = "card p-4 space-y-4";
         
-        let gridHtml = '';
+        let imgHtml = '';
         if(item.images.length > 0) {
-            gridHtml = `
+            imgHtml = `
                 <div class="image-scroll-wrapper">
                     ${item.images.map((img, idx) => `
                         <div class="thumb-container">
@@ -313,53 +319,49 @@ function render(arr) {
                 </div>
             `;
         } else {
-            gridHtml = `<div class="w-full h-24 bg-gray-50 rounded-xl flex items-center justify-center text-gray-300 text-[10px] italic">Không có ảnh</div>`;
+            imgHtml = `<div class="w-full h-32 bg-gray-50 rounded-2xl flex flex-col items-center justify-center text-gray-300 gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <span class="text-[10px] font-bold uppercase italic">Chưa có ảnh</span>
+            </div>`;
         }
 
         div.innerHTML = `
-            ${gridHtml}
-
-            <div class="space-y-3">
-                <div class="flex justify-between items-start gap-2">
-                    <h3 class="address-text text-gray-900 leading-tight flex-1">📍 ${item.address}</h3>
+            ${imgHtml}
+            <div class="space-y-4">
+                <div class="flex justify-between items-start gap-3">
+                    <h3 class="address-text leading-tight flex-1 uppercase">📍 ${item.address}</h3>
                     <span class="price-text whitespace-nowrap">${item.price}</span>
                 </div>
                 
-                <div class="flex flex-wrap gap-1.5">
-                    <span class="badge bg-amber-50 text-amber-700">Cọc: ${item.deposit}</span>
-                    <span class="badge bg-emerald-50 text-emerald-700">HH: ${item.commission}</span>
+                <div class="flex flex-wrap gap-2">
+                    <span class="badge bg-amber-50 text-amber-700 border border-amber-100">Cọc: ${item.deposit}</span>
+                    <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-100">HH: ${item.commission}</span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="btn-detail btn-small bg-indigo-50 text-indigo-700 rounded-xl font-bold uppercase border border-indigo-100 flex items-center justify-center gap-1 active:bg-indigo-100">
-                        📂 Folder
-                    </button>
-                    <button class="btn-copy-imgs btn-small bg-indigo-50 text-indigo-700 rounded-xl font-bold uppercase border border-indigo-100 flex items-center justify-center gap-1 active:bg-indigo-100">
-                        🖼️ Link Ảnh
-                    </button>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="btn-detail py-3 bg-slate-50 text-slate-700 rounded-xl font-bold text-[10px] uppercase border border-slate-200 flex items-center justify-center gap-2 active:bg-slate-100">📁 FOLDER</button>
+                    <button class="btn-copy-imgs py-3 bg-slate-50 text-slate-700 rounded-xl font-bold text-[10px] uppercase border border-slate-200 flex items-center justify-center gap-2 active:bg-slate-100">🖼️ LINK ẢNH</button>
                 </div>
 
-                <button class="btn-copy-phone w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 uppercase active:scale-[0.98] shadow-sm">
-                    📋 Số chủ: ${item.phone}
+                <button class="btn-copy-phone w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm flex items-center justify-center gap-3 uppercase shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all">
+                    📋 SỐ CHỦ: ${item.phone}
                 </button>
 
-                <div class="flex items-center text-[9px] text-gray-400 font-bold uppercase border-t pt-2 mt-1">
-                    <span>👤 Chủ: ${item.owner || "Trống"}</span>
+                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase border-t pt-3">
+                    <span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> CHỦ: ${item.owner || "TRỐNG"}</span>
                 </div>
             </div>
         `;
 
         div.querySelector('.btn-detail').onclick = () => {
-            if(item.detailLink && item.detailLink !== "") window.open(item.detailLink, '_blank');
-            else window.open(`https://drive.google.com/drive/u/0/search?q=parent:${DRIVE_FOLDER_ID}%20${encodeURIComponent(item.address)}`, '_blank');
+            if(item.detailLink) window.open(item.detailLink, '_blank');
+            else showToast("Không có link chi tiết");
         };
-
         div.querySelector('.btn-copy-imgs').onclick = () => {
-            if(item.rawImgLinks.length > 0) copyToClipboard(item.rawImgLinks.join('\n'), "✅ Copy link ảnh!");
-            else showToast("Không có ảnh để copy");
+            if(item.rawImgLinks.length > 0) copyToClipboard(item.rawImgLinks.join('\n'), "✅ Đã copy link ảnh!");
+            else showToast("Không có ảnh");
         };
-
-        div.querySelector('.btn-copy-phone').onclick = () => copyToClipboard(item.phone, "✅ Copy số điện thoại!");
+        div.querySelector('.btn-copy-phone').onclick = () => copyToClipboard(item.phone, "✅ Đã copy số điện thoại!");
 
         fragment.appendChild(div);
     });
@@ -381,16 +383,16 @@ function initLazyLoading() {
                 img.onload = () => {
                     el.style.backgroundImage = `url('${src}')`;
                     el.classList.remove('loading');
-                    el.classList.add('loaded');
                 };
                 observer.unobserve(el);
             }
         });
-    }, { rootMargin: '400px' });
+    }, { rootMargin: '300px' });
     thumbs.forEach(t => observer.observe(t));
 }
 
 function openImg(src) {
+    if(!src) return;
     $("modalImg").src = src;
     $("imgModal").style.display = "flex";
 }
