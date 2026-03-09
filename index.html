@@ -9,21 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-body{
-font-family:Inter,sans-serif;
-background:#f1f5f9;
-overscroll-behavior:none
-}
-
-.card{
-border-radius:18px
-}
-
-.badge{
-font-size:12px;
-padding:4px 10px;
-border-radius:999px
-}
+body{font-family:Inter,sans-serif;background:#f1f5f9;overscroll-behavior:none}
+.card{border-radius:18px}
+.badge{font-size:12px;padding:4px 10px;border-radius:999px}
 
 .thumb{
 height:140px;
@@ -33,10 +21,7 @@ background-position:center;
 cursor:pointer
 }
 
-#imgModal{
-touch-action:none;
-z-index:50
-}
+#imgModal{touch-action:none;z-index:50}
 
 #modalImg{
 max-width:100vw;
@@ -65,13 +50,12 @@ class="flex-1 p-3 rounded-xl text-gray-800" disabled>
 
 <button id="btn"
 class="bg-white/20 px-4 rounded-xl font-semibold text-sm"
-disabled>
-Tìm
-</button>
+disabled>Tìm</button>
 </div>
 
 </div>
 </header>
+
 
 <main class="max-w-3xl mx-auto p-3 space-y-4">
 
@@ -90,9 +74,7 @@ class="bg-white p-6 rounded-xl shadow text-center">
 
 <div id="empty"
 class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm">
-
 Không tìm thấy tài sản phù hợp
-
 </div>
 
 </main>
@@ -116,14 +98,12 @@ class="absolute top-4 right-4 text-white text-3xl">
 
 <script>
 
-/* CONFIG */
+/* ================= CONFIG ================= */
 
 const SHEET_ID='14ntbPzHZdUEBAx7FxwEfpO0wBjyqaxNzXVYYphe_q2A'
 const GID='61368668'
 
-const QUERY='select A,B,C,D,E,F,G,H,I,J limit 2000'
-
-const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json&tq=${encodeURIComponent(QUERY)}`
+const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`
 
 const $=id=>document.getElementById(id)
 
@@ -131,20 +111,7 @@ let DATA=[]
 let DISPLAY_DATA=[]
 
 
-/* CLEAN JSON */
-
-function cleanJSON(t){
-
-return JSON.parse(
-t.replace('/*O_o*/','')
-.replace('google.visualization.Query.setResponse(','')
-.slice(0,-2)
-)
-
-}
-
-
-/* GOOGLE DRIVE IMAGE */
+/* ================= IMAGE ================= */
 
 function driveToImage(url){
 
@@ -160,7 +127,47 @@ return m
 }
 
 
-/* LOAD DATA */
+/* ================= CSV PARSER ================= */
+
+function parseCSV(text){
+
+const rows=[]
+let row=[]
+let current=''
+let insideQuote=false
+
+for(let char of text){
+
+if(char=='"' ){
+insideQuote=!insideQuote
+continue
+}
+
+if(char==',' && !insideQuote){
+row.push(current)
+current=''
+continue
+}
+
+if(char=='\n' && !insideQuote){
+row.push(current)
+rows.push(row)
+row=[]
+current=''
+continue
+}
+
+current+=char
+}
+
+row.push(current)
+rows.push(row)
+
+return rows
+}
+
+
+/* ================= LOAD DATA ================= */
 
 async function loadData(){
 
@@ -170,93 +177,62 @@ const res=await fetch(URL)
 
 const txt=await res.text()
 
-const json=cleanJSON(txt)
+const rows=parseCSV(txt).slice(1)
 
-
-DATA=json.table.rows.map(r=>{
+DATA=rows.map(c=>{
 
 const images=[
-
-driveToImage(r.c?.[7]?.v),
-
-driveToImage(r.c?.[8]?.v),
-
-driveToImage(r.c?.[9]?.v)
-
+driveToImage(c[7]),
+driveToImage(c[8]),
+driveToImage(c[9])
 ].filter(Boolean)
-
 
 return{
 
-owner:r.c?.[0]?.v||'',
-
-phone:r.c?.[1]?.v||'',
-
-address:r.c?.[2]?.v||'',
-
-price:r.c?.[3]?.v||'',
-
-deposit:r.c?.[4]?.v||'',
-
-commission:r.c?.[5]?.v||'',
-
-imageLink:r.c?.[6]?.v||'',
-
+owner:c[0]||'',
+phone:c[1]||'',
+address:c[2]||'',
+price:c[3]||'',
+deposit:c[4]||'',
+commission:c[5]||'',
+imageLink:c[6]||'',
 images
 
 }
 
 }).filter(i=>i.address && i.address.trim()!=='')
 
-
 DISPLAY_DATA=[...DATA]
 
-
 $('loading').classList.add('hidden')
-
 $('search').disabled=false
-
 $('btn').disabled=false
 
 render(DISPLAY_DATA)
 
-}
-
-catch(err){
+}catch(err){
 
 console.error(err)
-
-document.querySelector('#loading p').innerText=
-'Lỗi tải dữ liệu'
+document.querySelector('#loading p').innerText='Lỗi tải dữ liệu'
 
 }
 
 }
 
 
-
-/* SEARCH */
+/* ================= SEARCH ================= */
 
 function search(){
 
 const k=$('search').value.toLowerCase().trim()
 
-$('search').blur()
-
 DISPLAY_DATA=!k
-
 ?[...DATA]
-
 :DATA.filter(i=>
-
 [i.address,i.phone,i.price,i.deposit,i.commission]
-
 .join(' ')
-
 .toLowerCase()
-
 .includes(k)
-
 )
 
 render(DISPLAY_DATA)
@@ -264,17 +240,14 @@ render(DISPLAY_DATA)
 }
 
 
-
-/* COPY PHONE */
+/* ================= COPY PHONE ================= */
 
 function copyPhone(btn,phone){
 
 navigator.clipboard.writeText(phone)
-
 .then(()=>{
 
 const old=btn.innerHTML
-
 btn.innerHTML='✓'
 
 setTimeout(()=>btn.innerHTML=old,1000)
@@ -284,8 +257,7 @@ setTimeout(()=>btn.innerHTML=old,1000)
 }
 
 
-
-/* RENDER */
+/* ================= RENDER ================= */
 
 function render(arr){
 
@@ -295,147 +267,93 @@ box.innerHTML=''
 
 $('empty').classList.add('hidden')
 
-
 if(!arr.length){
 
 box.classList.add('hidden')
-
 $('empty').classList.remove('hidden')
 
 return
 
 }
 
-
 box.classList.remove('hidden')
-
 
 box.innerHTML=arr.map((i,ci)=>`
 
 <div class="card bg-white p-4 shadow space-y-3">
 
-
-${i.images.length
-
-?`<div class="grid grid-cols-3 gap-2">
+${i.images.length?`
+<div class="grid grid-cols-3 gap-2">
 
 ${i.images.map((img,idx)=>`
-
 <div class="thumb"
-
 data-idx="${idx}"
-
 data-card="${ci}"
-
 style="background-image:url('${img}')">
-
 </div>
-
 `).join('')}
 
-</div>`
-
-:''}
-
-
+</div>`:''}
 
 <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
 
 <div class="text-xs uppercase text-indigo-500">
-
 Địa chỉ
-
 </div>
 
 <div class="font-bold text-indigo-800">
-
 📍
-
 <a href="${i.imageLink||'#'}"
-
 target="_blank"
-
 class="hover:underline">
-
 ${i.address}
-
 </a>
-
 </div>
 
 </div>
-
 
 <div class="bg-red-50 border border-red-200 text-red-700 font-extrabold px-3 py-2 rounded-xl text-sm">
-
 💰 Giá thuê: ${i.price}
-
 </div>
-
 
 <div class="flex gap-2">
 
 <span class="badge bg-gray-100">
-
 Cọc ${i.deposit}
-
 </span>
 
 <span class="badge bg-green-100 text-green-700 font-semibold">
-
 HH ${i.commission}
-
 </span>
 
 </div>
-
 
 <div class="flex gap-2">
 
 <a href="tel:${i.phone}"
-
 class="flex-1 bg-green-600 text-white py-2 rounded-xl text-center font-semibold">
-
 📞 GỌI NGAY (${i.phone})
-
 </a>
 
 <button onclick="copyPhone(this,'${i.phone}')"
-
 class="bg-gray-200 px-3 rounded-xl">
-
 📋
-
 </button>
 
 </div>
 
-
-${i.images.length>1
-
-?`<div class="text-right">
-
+${i.images.length>1?`
+<div class="text-right">
 <a href="${i.imageLink||'#'}"
-
 target="_blank"
-
 class="text-sm text-blue-600 hover:underline font-semibold">
-
 Xem thêm ảnh
-
 </a>
-
-</div>`
-
-:''}
-
+</div>`:''}
 
 <div class="text-sm text-gray-500">
-
 👤 ${i.owner}
-
 </div>
-
 
 </div>
 
@@ -444,29 +362,19 @@ Xem thêm ảnh
 }
 
 
-
-/* POPUP */
+/* ================= POPUP ================= */
 
 let modalImgs=[]
-
 let modalIdx=0
 
-let scale=1
-
-
 const imgModal=$('imgModal')
-
 const modalImg=$('modalImg')
-
 const imgCount=$('imgCount')
-
 
 document.addEventListener('click',e=>{
 
 const t=e.target.closest('.thumb')
-
 if(!t) return
-
 
 const cardIdx=+t.dataset.card
 
@@ -478,17 +386,16 @@ openModal()
 
 })
 
-
 function openModal(){
 
 modalImg.src=modalImgs[modalIdx]
 
-imgCount.innerText=`${modalIdx+1}/${modalImgs.length}`
+imgCount.innerText=
+`${modalIdx+1}/${modalImgs.length}`
 
 imgModal.classList.remove('hidden')
 
 }
-
 
 function closeModal(){
 
@@ -497,26 +404,16 @@ imgModal.classList.add('hidden')
 }
 
 
-imgModal.onclick=e=>{
-
-if(e.target===imgModal) closeModal()
-
-}
-
-
-
-/* EVENTS */
+/* ================= EVENTS ================= */
 
 $('btn').onclick=search
 
 $('search').addEventListener('keydown',e=>{
-
 if(e.key==='Enter') search()
-
 })
 
 
-/* LOAD */
+/* ================= START ================= */
 
 loadData()
 
